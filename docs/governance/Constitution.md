@@ -23,6 +23,12 @@
 - Documentação atualizada junto com cada mudança de comportamento, decisão ou contrato relevante.
 - Milestones com critérios de aceite explícitos, conforme definido no `Implementation-Plan.md`.
 - Commits atômicos e semânticos; branches por feature/fix alinhados ao milestone.
+- Fluxo de versionamento obrigatório em GitFlow com política Forward-Only.
+- Forward-Only: proibido reescrever histórico (`rebase`, `reset --hard`, `revert`), exceto com aprovação humana explícita.
+- Fluxo mínimo obrigatório:
+  - `feature/*` e `bugfix/*` sempre partem de `develop` e retornam por PR para `develop`.
+  - `release/x.x.x` parte de `develop`, promove para `master` por PR e depois sincroniza `master` -> `develop` por PR.
+  - `hotfix/*` parte de `master`, promove para `master` por PR e depois sincroniza `master` -> `develop` por PR.
 
 ## 4. Regras de validação
 

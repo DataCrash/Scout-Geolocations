@@ -32,13 +32,39 @@ Objetivo desse fluxo:
 3. Faça mudanças pequenas e verificáveis.
 4. Registre motivação e impacto em commit e PR.
 
-## Convenção de branch (sugestão)
+## Fluxo GitFlow obrigatório (Forward-Only)
+
+As regras abaixo sao obrigatorias para este repositório:
+
+1. **Forward-Only**: nao usar `git revert`, `git rebase`, `reset --hard`
+   ou reescrita de historico, exceto com ordem explicita do responsavel do projeto.
+2. Branch de desenvolvimento padrao: `develop`.
+3. Branch de comparacao/release: `master`.
+4. Toda implementacao deve nascer de `develop` em branch dedicada:
+   - `feature/*` para novas funcionalidades.
+   - `bugfix/*` para correcoes nao emergenciais.
+5. Fluxo diario:
+   - `feature/*`/`bugfix/*` -> PR -> `develop`.
+6. Fechamento de versao:
+   - criar `release/x.x.x` a partir de `develop`.
+   - validar integridade e aplicar ajustes pequenos na release.
+   - `release/x.x.x` -> PR -> `master`.
+   - apos merge em `master`, abrir PR `master` -> `develop`.
+7. Correcao emergencial em producao:
+   - criar `hotfix/*` a partir de `master`.
+   - `hotfix/*` -> PR -> `master`.
+   - apos merge em `master`, abrir PR `master` -> `develop`.
+8. Quando o agente IA for o unico implementador ativo, ele pode abrir/aprovar/taguear PRs,
+   mas deve manter 100% do fluxo acima para preservar historico e rastreabilidade.
+
+## Convenção de branch
 
 - `feature/<nome-curto>` para evolução de funcionalidade ou documentação.
-- `docs/<tema>` para mudanças somente de documentação.
-- `chore/<tema>` para manutenção técnica do boilerplate.
+- `bugfix/<nome-curto>` para correções de defeitos.
+- `release/<x.x.x>` para estabilização de versão.
+- `hotfix/<nome-curto>` para correções emergenciais em produção.
 
-## Convenção de commit (sugestão)
+## Convenção de commit
 
 - `feat:` nova funcionalidade
 - `fix:` correção

@@ -38,3 +38,13 @@ O agente deve ajudar a transformar `BluePrint.md` em documentação estratégica
 ## Regra de derivação
 
 Enquanto `BluePrint.md` não estiver suficientemente preenchido, documentos estratégicos devem permanecer em modo placeholder ou rascunho controlado.
+
+## Regra obrigatória de versionamento (GitFlow + Forward-Only)
+
+- Politica de historico: **Forward-Only**. Nao usar `rebase`, `revert`, `reset --hard` ou qualquer reescrita de historico, exceto com ordem explicita do responsavel do projeto.
+- Branch default de desenvolvimento: `develop`.
+- Branch de comparacao e release: `master`.
+- Toda implementacao deve ser feita em `feature/*` ou `bugfix/*` com origem em `develop` e PR de volta para `develop`.
+- Encerramento de versao: criar `release/x.x.x` a partir de `develop`, PR para `master` e, apos merge, PR `master` -> `develop`.
+- Correcao emergencial: criar `hotfix/*` a partir de `master`, PR para `master` e, apos merge, PR `master` -> `develop`.
+- Mesmo quando o agente IA estiver operando sozinho, o fluxo completo deve ser seguido para preservar rastreabilidade.

@@ -63,7 +63,7 @@
   "editor.fontLigatures": true,
   "editor.lineHeight": 1.6,
   "editor.letterSpacing": 0.5,
-  "editor.wordWrap": "on",
+  "editor.wordWrap": "bounded",
   "editor.wordWrapColumn": 120,
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
@@ -90,7 +90,7 @@
   // ──────────────────────────────────────────────────────────────────────────────
   // AUTO-SAVE & FILES
   // ──────────────────────────────────────────────────────────────────────────────
-  "files.autoSave": "afterDelay",
+  "files.autoSave": "off",
   "files.autoSaveDelay": 1000,
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
@@ -212,7 +212,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "cSpell.enabled": true,
-    "editor.wordWrap": "on",
+    "editor.wordWrap": "bounded",
     "editor.tabSize": 2
   },
 

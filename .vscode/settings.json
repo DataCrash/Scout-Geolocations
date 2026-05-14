@@ -177,10 +177,12 @@
   },
 
   "[typescript]": {
+    "js/ts.format.semicolons": "insert",
     "cSpell.enabled": true
   },
 
   "[typescriptreact]": {
+    "js/ts.format.semicolons": "insert",
     "cSpell.enabled": true
   },
 
@@ -200,7 +202,7 @@
   "prettier.useTabs": false,
   "prettier.semi": true,
   "prettier.singleQuote": false,
-  "prettier.trailingComma": "es5",
+  "prettier.trailingComma": "all",
   "prettier.bracketSpacing": true,
   "prettier.arrowParens": "always",
   "prettier.endOfLine": "lf",

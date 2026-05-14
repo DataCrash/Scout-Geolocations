@@ -1,0 +1,44 @@
+name: CI (develop)
+
+on:
+  pull_request:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore solution
+        run: dotnet restore Scout-Geolocations.sln
+
+      - name: Build solution
+        run: dotnet build Scout-Geolocations.sln --configuration Release --no-restore --nologo
+
+      - name: Test projects (if any)
+        shell: bash
+        run: |
+          test_projects=$(find . -name "*Tests*.csproj" -not -path "*/bin/*" -not -path "*/obj/*")
+          if [[ -z "$test_projects" ]]; then
+            echo "No test projects found."
+            exit 0
+          fi
+
+          while IFS= read -r project; do
+            [[ -z "$project" ]] && continue
+            echo "Running tests for $project"
+            dotnet test "$project" --configuration Release --no-build --verbosity normal
+          done <<< "$test_projects"

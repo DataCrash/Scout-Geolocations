@@ -2,15 +2,15 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scout.Cache.Api.Endpoints;
-using Scout.Cache.Api.Infrastructure;
-using Scout.Cache.Api.Services;
+using Scout.Location.Api.Endpoints;
+using Scout.Location.Api.Infrastructure;
+using Scout.Location.Api.Services;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Banco de dados ────────────────────────────────────────────────────────────
-builder.Services.AddDbContext<CacheDbContext>(options =>
+builder.Services.AddDbContext<LocationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ── Redis ─────────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssemblyContaining<Program>());
 
 // ── Serviços de domínio ───────────────────────────────────────────────────────
-builder.Services.AddScoped<GeocacheService>();
+builder.Services.AddScoped<LocationService>();
 
 // ── OpenAPI / Documentação ────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
@@ -79,23 +79,17 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<CacheDbContext>();
-    await db.Database.MigrateAsync();
+    var dbCtx = scope.ServiceProvider.GetRequiredService<LocationDbContext>();
+    await dbCtx.Database.MigrateAsync();
 
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// ── Pipeline ──────────────────────────────────────────────────────────────────
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ── Endpoints ─────────────────────────────────────────────────────────────────
-app.MapGeocacheEndpoints();
+app.MapLocationEndpoints();
 
-app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "scout-cache-api" }))
-   .WithTags("Health")
-   .AllowAnonymous();
-
-await app.RunAsync();
+app.Run();

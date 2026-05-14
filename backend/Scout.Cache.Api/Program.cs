@@ -2,15 +2,23 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scout.Identity.Api.Endpoints;
-using Scout.Identity.Api.Infrastructure;
-using Scout.Identity.Api.Services;
+using Scout.Cache.Api.Endpoints;
+using Scout.Cache.Api.Infrastructure;
+using Scout.Cache.Api.Services;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Banco de dados ────────────────────────────────────────────────────────────
-builder.Services.AddDbContext<IdentityDbContext>(options =>
+builder.Services.AddDbContext<CacheDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ── Redis ─────────────────────────────────────────────────────────────────────
+var redisConn = builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException("Redis connection string não configurada");
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(redisConn));
 
 // ── Autenticação JWT ──────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]
@@ -19,23 +27,23 @@ var jwtKey = builder.Configuration["Jwt:Key"]
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.MapInboundClaims = false; // preserva nomes originais dos claims (ex.: "sub", "role")
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidIssuer              = builder.Configuration["Jwt:Issuer"],
+            ValidAudience            = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         };
     });
 
 // ── Autorização ───────────────────────────────────────────────────────────────
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("ChefesEscoteiro",
+    options.AddPolicy("AdminOnly",
         policy => policy.RequireClaim("role", "ChefesEscoteiro"));
 });
 
@@ -44,10 +52,7 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssemblyContaining<Program>());
 
 // ── Serviços de domínio ───────────────────────────────────────────────────────
-builder.Services.AddScoped<GoogleAuthService>();
-builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<PatrulhaService>();
-builder.Services.AddSingleton<QrCodeService>();
+builder.Services.AddScoped<GeocacheService>();
 
 // ── OpenAPI / Documentação ────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
@@ -74,26 +79,22 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<CacheDbContext>();
     await db.Database.MigrateAsync();
-}
 
-// ── Pipeline ──────────────────────────────────────────────────────────────────
-if (app.Environment.IsDevelopment())
-{
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// ── Pipeline ──────────────────────────────────────────────────────────────────
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
 // ── Endpoints ─────────────────────────────────────────────────────────────────
-app.MapAuthEndpoints();
-app.MapPatrulhaEndpoints();
-app.MapAdminEndpoints();
+app.MapGeocacheEndpoints();
 
-app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "scout-identity-api" }))
+app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "scout-cache-api" }))
    .WithTags("Health")
    .AllowAnonymous();
 

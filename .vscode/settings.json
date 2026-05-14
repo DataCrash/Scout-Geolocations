@@ -473,5 +473,8 @@
   // ──────────────────────────────────────────────────────────────────────────────
   "extensions.ignoreRecommendations": false,
   "workbench.enableExperiments": true,
-  "dotnet.formatting.organizeImportsOnFormat": true
+  "dotnet.formatting.organizeImportsOnFormat": true,
+  "containers.commands.attach": "docker exec -it",
+  "containers.containers.label": "name",
+  "containers.images.label": "name"
 }

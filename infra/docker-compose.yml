@@ -102,6 +102,32 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  location-api:
+    build:
+      context: ../backend/Scout.Location.Api
+      dockerfile: Dockerfile
+    container_name: scout-location-api
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=scout_location;Username=scout;Password=scout_dev_pass
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=scout-geolocations
+      - Jwt__Audience=scout-geolocations-client
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=scout
+      - RabbitMq__Password=scout_dev_pass
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:

@@ -63,7 +63,7 @@ public sealed class LocationService(LocationDbContext db, IConnectionMultiplexer
 
         if (last is null) return null;
 
-        var eventId = Guid.TryParse(eventIdStr, out var eid) ? eid : last.EventId;
+        var eventId = Guid.TryParse((string?)eventIdStr, out var eid) ? eid : last.EventId;
 
         return new UserLocationResponse(
             userId,
@@ -98,12 +98,13 @@ public sealed class LocationService(LocationDbContext db, IConnectionMultiplexer
 
         foreach (var r in results)
         {
-            if (!Guid.TryParse(r.Member.ToString(), out var uid)) continue;
+            if (!Guid.TryParse((string?)r.Member.ToString(), out var uid)) continue;
 
             if (eventId.HasValue)
             {
                 var evStr = await _geo.HashGetAsync(EventHashKey, uid.ToString());
-                if (!Guid.TryParse(evStr, out var ev) || ev != eventId.Value) continue;
+                string evStrText = evStr.ToString();
+                if (!Guid.TryParse(evStrText, out var ev) || ev != eventId.Value) continue;
             }
 
             nearby.Add(new NearbyUserResponse(

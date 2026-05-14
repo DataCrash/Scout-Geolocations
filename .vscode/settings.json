@@ -1,0 +1,477 @@
+{
+  // ═════════════════════════════════════════════════════════════════════════════
+  // SCOUT GEOLOCATIONS — VS CODE CONFIGURATION
+  // Otimizado para: .NET, PostgreSQL, Docker, Clean Code & Developer Experience
+  // ═════════════════════════════════════════════════════════════════════════════
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // THEME & UI — Otimizado para conforto visual e redução de fadiga ocular
+  // ──────────────────────────────────────────────────────────────────────────────
+  "workbench.colorTheme": "Dracula Theme",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.productIconTheme": "fluent-icons",
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "terminal.integrated.profiles.windows": {
+    "Git Bash": {
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+      "args": ["--login", "-i"],
+      "icon": "terminal-bash"
+    },
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    }
+  },
+
+  // Interface limpa — remover distrações
+  "workbench.startupEditor": "none",
+  "workbench.layoutControl.enabled": false,
+  "workbench.activityBar.location": "default",
+  "workbench.sideBar.location": "left",
+  "breadcrumbs.enabled": true,
+  "editor.minimap.enabled": true,
+  "editor.minimap.maxColumn": 120,
+
+  // Customização visual Dracula + Material Icons
+  "workbench.colorCustomizations": {
+    "[Dracula]": {
+      "editor.background": "#282a36",
+      "editorLineNumber.foreground": "#44475a",
+      "editor.selectionBackground": "#44475a80",
+      "editor.wordHighlightBackground": "#44475a40",
+      "editorIndentGuide.background1": "#44475a40",
+      "editorIndentGuide.activeBackground1": "#6272a4"
+    }
+  },
+
+  "editor.tokenColorCustomizations": {
+    "[Dracula]": {
+      "comments": "#6272a4",
+      "strings": "#f1fa8c",
+      "numbers": "#bd93f9",
+      "keywords": "#ff79c6",
+      "types": "#8be9fd",
+      "functions": "#50fa7b"
+    }
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // EDITOR — Formatação e Indentação
+  // ──────────────────────────────────────────────────────────────────────────────
+  "editor.fontSize": 14,
+  "editor.fontFamily": "Cascadia Code, Consolas, Courier New",
+  "editor.fontLigatures": true,
+  "editor.lineHeight": 1.6,
+  "editor.letterSpacing": 0.5,
+  "editor.wordWrap": "on",
+  "editor.wordWrapColumn": 120,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.trimAutoWhitespace": true,
+  "editor.cursorBlinking": "phase",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.lineNumbers": "on",
+  "editor.renderWhitespace": "selection",
+  "editor.rulers": [80, 120],
+
+  // Guias de indentação
+  "editor.guides.indentation": true,
+  "editor.guides.bracketPairs": true,
+  "editor.bracketPairColorization.enabled": true,
+
+  // Semantics & IntelliSense
+  "editor.semanticHighlighting.enabled": true,
+  "editor.stickyScroll.enabled": true,
+  "editor.stickyScroll.maxLineCount": 5,
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // AUTO-SAVE & FILES
+  // ──────────────────────────────────────────────────────────────────────────────
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.eol": "\n",
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true,
+    "**/.vscode": false,
+    "**/*.user": true,
+    "**/.DS_Store": true
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // C# / .NET Configuration
+  // ──────────────────────────────────────────────────────────────────────────────
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp",
+    "editor.formatOnSave": true,
+    "cSpell.enabled": true,
+    "editor.tabSize": 4,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  "omnisharp.enableEditorConfigSupport": true,
+  "omnisharp.enableRoslynAnalyzers": true,
+  "omnisharp.enableAsyncCompletion": true,
+  "omnisharp.useModernNet": true,
+
+  // Roslyn Analyzer - Code Quality & SOLID Principles
+  "dotnet_diagnostic.IDE0001.severity": "warning",
+  "dotnet_diagnostic.IDE0005.severity": "warning",
+  "dotnet_diagnostic.IDE0055.severity": "suggestion",
+  "dotnet_diagnostic.CA1000.severity": "warning",
+  "dotnet_diagnostic.CA1018.severity": "warning",
+  "dotnet_diagnostic.CA1707.severity": "warning",
+  "dotnet_diagnostic.CA1711.severity": "suggestion",
+  "dotnet_diagnostic.CA1720.severity": "suggestion",
+  "dotnet_diagnostic.CA1805.severity": "warning",
+  "dotnet_diagnostic.CA1815.severity": "warning",
+  "dotnet_diagnostic.CA1820.severity": "warning",
+  "dotnet_diagnostic.CA1822.severity": "suggestion",
+  "dotnet_diagnostic.CA1823.severity": "warning",
+  "dotnet_diagnostic.CA1826.severity": "suggestion",
+  "dotnet_diagnostic.CA1827.severity": "suggestion",
+  "dotnet_diagnostic.CA1829.severity": "suggestion",
+  "dotnet_diagnostic.CA1834.severity": "suggestion",
+  "dotnet_diagnostic.CA2000.severity": "warning",
+  "dotnet_diagnostic.CA2208.severity": "warning",
+  "dotnet_diagnostic.CA2213.severity": "warning",
+  "dotnet_diagnostic.CA2214.severity": "warning",
+  "dotnet_diagnostic.CA2215.severity": "warning",
+  "dotnet_diagnostic.CA2217.severity": "suggestion",
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // JSON & YAML Formatting
+  // ──────────────────────────────────────────────────────────────────────────────
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "cSpell.enabled": true,
+    "editor.tabSize": 2
+  },
+
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "cSpell.enabled": true,
+    "editor.tabSize": 2
+  },
+
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "cSpell.enabled": true,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+
+  "[typescript]": {
+    "cSpell.enabled": true
+  },
+
+  "[typescriptreact]": {
+    "cSpell.enabled": true
+  },
+
+  "[plaintext]": {
+    "cSpell.enabled": true
+  },
+
+  "[xml]": {
+    "editor.defaultFormatter": "redhat.vscode-xml",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  // Prettier configuration
+  "prettier.printWidth": 120,
+  "prettier.tabWidth": 2,
+  "prettier.useTabs": false,
+  "prettier.semi": true,
+  "prettier.singleQuote": false,
+  "prettier.trailingComma": "es5",
+  "prettier.bracketSpacing": true,
+  "prettier.arrowParens": "always",
+  "prettier.endOfLine": "lf",
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // MARKDOWN Configuration
+  // ──────────────────────────────────────────────────────────────────────────────
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "cSpell.enabled": true,
+    "editor.wordWrap": "on",
+    "editor.tabSize": 2
+  },
+
+  "markdownlint.config": {
+    "MD003": false,
+    "MD007": { "indent": 2 },
+    "MD013": { "line_length": 120, "code_blocks": false },
+    "MD024": false,
+    "MD025": false,
+    "MD033": false,
+    "MD040": false
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // GIT & VERSION CONTROL
+  // ──────────────────────────────────────────────────────────────────────────────
+  "git.enabled": true,
+  "git.ignoreLimitWarning": true,
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "gitlens.codeLens.enabled": true,
+  "gitlens.codeLens.recentChange.enabled": true,
+  "gitlens.blame.compact": true,
+  "gitlens.statusBar.enabled": true,
+  "gitlens.views.repositories.branches.layout": "tree",
+  "gitlens.views.fileHistory.enabled": true,
+  "gitlens.advanced.messages": {
+    "suppressCommitNotFoundWarning": false
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // DOCKER Integration
+  // ──────────────────────────────────────────────────────────────────────────────
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers",
+    "editor.tabSize": 4
+  },
+
+  "docker.commands.attach": "docker exec -it",
+  "docker.containers.label": "name",
+  "docker.images.label": "name",
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // DATABASE & SQL Tools
+  // ──────────────────────────────────────────────────────────────────────────────
+  "sqltools.connections": [],
+  "sqltools.useNodeRuntime": true,
+  "sqltools.autoOpenSessionFiles": false,
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // REST CLIENT Configuration
+  // ──────────────────────────────────────────────────────────────────────────────
+  "rest-client.defaultHeaders": {
+    "Content-Type": "application/json"
+  },
+  "rest-client.timeoutinmilliseconds": 30000,
+  "rest-client.showResponseInDifferentTab": true,
+  "rest-client.previewResponseInUnitTests": true,
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // SEARCH & EXCLUDE Patterns
+  // ──────────────────────────────────────────────────────────────────────────────
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true,
+    "**/.git": true
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // EXPLORER & File Icons
+  // ──────────────────────────────────────────────────────────────────────────────
+  "explorer.confirmDelete": true,
+  "explorer.confirmDragAndDrop": true,
+  "explorer.decorations.badges": true,
+  "explorer.decorations.colors": true,
+
+  "material-icon-theme.activeIconPack": "angular",
+  "material-icon-theme.showUpdateMessage": false,
+  "material-icon-theme.showWelcomeMessage": false,
+  "material-icon-theme.folders.color": "#42a5f5",
+  "material-icon-theme.folders.theme": "specific",
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // LINTING & CODE QUALITY — SonarLint, ESLint
+  // ──────────────────────────────────────────────────────────────────────────────
+  "sonarlint.rules": {
+    "c:S3776": {
+      "level": "on",
+      "parameters": {
+        "threshold": 5
+      }
+    },
+    "typescript:S1192": {
+      "level": "on",
+      "parameters": {
+        "threshold": 3
+      }
+    },
+    "typescript:S3776": {
+      "level": "on",
+      "parameters": {
+        "threshold": 5
+      }
+    }
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // TERMINAL Configuration
+  // ──────────────────────────────────────────────────────────────────────────────
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.lineHeight": 1.5,
+  "terminal.integrated.cursorBlinking": true,
+  "terminal.integrated.cursorStyle": "line",
+  "terminal.integrated.scrollback": 5000,
+  "terminal.integrated.shellArgs.windows": [
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass"
+  ],
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // EXTENSIONS — SonarLint Configuration
+  // ──────────────────────────────────────────────────────────────────────────────
+  "sonarlint.output": "Show the SonarLint output channel",
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // SPELL CHECKER — Português Brasileiro
+  // ──────────────────────────────────────────────────────────────────────────────
+  "cSpell.enabled": false,
+  "cSpell.language": "en,pt_BR",
+  "cSpell.dictionaries": ["en", "pt_BR"],
+  "cSpell.ignoreWords": [
+    "patrulha",
+    "submonitor",
+    "escoteiros",
+    "geolocations"
+  ],
+  "cSpell.ignorePaths": [
+    "**/node_modules",
+    "**/bin",
+    "**/obj",
+    "**/.vs",
+    "**/.git",
+    "**/dist"
+  ],
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // SOLUTION EXPLORER — .sln file navigation
+  // ──────────────────────────────────────────────────────────────────────────────
+  "vssolution.showMode": "activityBar",
+  "vssolution.trackActiveItem": true,
+  "vssolution.netcoreIgnore": ["bin", "obj", "node_modules", ".vs"],
+  "vssolution.altSolutionFolders": [],
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // BOOKMARKS — Atalhos para arquivos importantes
+  // ──────────────────────────────────────────────────────────────────────────────
+  "bookmarks.saveBookmarksInProject": true,
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // TODO TREE — Rastreamento de tasks
+  // ──────────────────────────────────────────────────────────────────────────────
+  "todo-tree.general.tags": [
+    "TODO",
+    "FIXME",
+    "HACK",
+    "REFACTOR",
+    "NOTE",
+    "BUG"
+  ],
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "icon": "circle-filled",
+      "iconColor": "#4FC3F7",
+      "foreground": "#ffffff",
+      "background": "#1e90ff",
+      "rulerColor": "#1e90ff"
+    },
+    "FIXME": {
+      "icon": "alert-filled",
+      "iconColor": "#FF5252",
+      "foreground": "#ffffff",
+      "background": "#ff1744",
+      "rulerColor": "#ff1744"
+    },
+    "HACK": {
+      "icon": "beaker-filled",
+      "iconColor": "#FFB300",
+      "foreground": "#000000",
+      "background": "#ffc400",
+      "rulerColor": "#ffc400"
+    },
+    "REFACTOR": {
+      "icon": "wrench-filled",
+      "iconColor": "#76FF03",
+      "foreground": "#000000",
+      "background": "#b3e5fc",
+      "rulerColor": "#b3e5fc"
+    }
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // LIVE SHARE — Colaboração em tempo real
+  // ──────────────────────────────────────────────────────────────────────────────
+  "liveshare.presence": true,
+  "liveshare.autoShareServers": false,
+  "liveshare.allowGuestDebugControl": false,
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // DEBUG Configuration
+  // ──────────────────────────────────────────────────────────────────────────────
+  "debug.onTaskErrors": "prompt",
+  "debug.showDebugOutput": false,
+  "debug.inlineValues": "on",
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // EDITOR CONFIG — SOLID, YAGNI, DRY, KISS Principles
+  // ──────────────────────────────────────────────────────────────────────────────
+  "editor.suggest.showStatusBar": true,
+  "editor.parameterHints.enabled": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.acceptSuggestionOnCommitCharacter": true,
+  "editor.quickSuggestionsDelay": 10,
+
+  // CodeActions para auto-fix
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // WINDOW & PERFORMANCE
+  // ──────────────────────────────────────────────────────────────────────────────
+  "window.title": "Scout Geolocations — ${dirty}${activeEditorShort}${separator}${folderName}",
+  "window.zoomLevel": 0,
+  "window.commandCenter": false,
+  "extensions.autoCheckUpdates": true,
+  "extensions.autoUpdate": true,
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // TELEMETRY & PRIVACY
+  // ──────────────────────────────────────────────────────────────────────────────
+  "telemetry.telemetryLevel": "off",
+  "telemetry.enableTelemetry": false,
+  "redhat.telemetry.enabled": false,
+  "sonarlint.disableTelemetry": true,
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // INSIDERS & EXPERIMENTAL
+  // ──────────────────────────────────────────────────────────────────────────────
+  "extensions.ignoreRecommendations": false,
+  "workbench.enableExperiments": true,
+  "dotnet.formatting.organizeImportsOnFormat": true
+}

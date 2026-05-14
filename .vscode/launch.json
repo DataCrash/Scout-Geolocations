@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Core Attach",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
+    },
+    {
+      "name": "Identity Service (Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-identity-service",
+      "program": "${workspaceFolder}/backend/Scout.Identity.Api/bin/Debug/net8.0/Scout.Identity.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/backend/Scout.Identity.Api",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "$1",
+        "action": "openExternally"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Identity Service (Release)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "publish-identity-service",
+      "program": "${workspaceFolder}/backend/Scout.Identity.Api/bin/Release/net8.0/Scout.Identity.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/backend/Scout.Identity.Api",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Production"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Identity Service + Docker Compose",
+      "configurations": ["Identity Service (Debug)"],
+      "preLaunchTask": "docker-compose-up",
+      "postDebugTask": "docker-compose-down"
+    }
+  ]
+}

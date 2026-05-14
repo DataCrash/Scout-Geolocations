@@ -50,7 +50,8 @@ builder.Services.AddScoped<PatrulhaService>();
 builder.Services.AddSingleton<QrCodeService>();
 
 // ── OpenAPI / Documentação ────────────────────────────────────────────────────
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -78,7 +79,11 @@ if (app.Environment.IsDevelopment())
 }
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
-app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,0 +1,18 @@
+# Gitflow Configuration
+# Branch naming conventions and workflow
+
+[gitflow "branch"]
+  master = main
+  develop = develop
+  feature = feature/
+  bugfix = bugfix/
+  release = release/
+  hotfix = hotfix/
+  support = support/
+
+[gitflow "prefix"]
+  feature = feature/
+  bugfix = bugfix/
+  release = release/
+  hotfix = hotfix/
+  support = support/

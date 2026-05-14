@@ -40,7 +40,7 @@ services:
       RABBITMQ_DEFAULT_PASS: scout_dev_pass
     ports:
       - "5672:5672"
-      - "15672:15672"  # Management UI: http://localhost:15672
+      - "15672:15672" # Management UI: http://localhost:15672
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:

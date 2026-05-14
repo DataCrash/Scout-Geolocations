@@ -1,0 +1,92 @@
+{
+  "recommendations": [
+    // ──────────────────────────────────────────────────────────────────────────
+    // C# / .NET Development
+    // ──────────────────────────────────────────────────────────────────────────
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.vscode-dotnet-runtime",
+    "formulahendry.dotnet",
+    "fernandoescolar.vscode-solution-explorer",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Testing
+    // ──────────────────────────────────────────────────────────────────────────
+    "ms-playwright.playwright",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Code Quality & Linting
+    // ──────────────────────────────────────────────────────────────────────────
+    "sonarsource.sonarlint-vscode",
+    "github.copilot",
+    "github.copilot-chat",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Formatting
+    // ──────────────────────────────────────────────────────────────────────────
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Containerization & Infrastructure
+    // ──────────────────────────────────────────────────────────────────────────
+    "ms-azuretools.vscode-docker",
+    "ms-azuretools.vscode-bicep",
+    "ms-vscode-remote.remote-containers",
+    "ms-vscode-remote.remote-ssh",
+    "ms-vscode-remote.remote-wsl",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Database & Data Tools (PostgreSQL)
+    // ──────────────────────────────────────────────────────────────────────────
+    "ckolkman.vscode-postgres",
+    "mtxr.sqltools",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // REST API Testing & Documentation
+    // ──────────────────────────────────────────────────────────────────────────
+    "humao.rest-client",
+    "42crunch.vscode-openapi",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Version Control & Git
+    // ──────────────────────────────────────────────────────────────────────────
+    "eamodio.gitlens",
+    "github.remotehub",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Markdown & Documentation
+    // ──────────────────────────────────────────────────────────────────────────
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+    "bierner.markdown-mermaid",
+    "bierner.markdown-preview-github-styles",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // File Navigation & IDE Enhancements
+    // ──────────────────────────────────────────────────────────────────────────
+    "alefragnani.bookmarks",
+    "alefragnani.project-manager",
+    "gruntfuggly.todo-tree",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Themes & UI
+    // ──────────────────────────────────────────────────────────────────────────
+    "dracula-theme.theme-dracula",
+    "pkief.material-icon-theme",
+    "miguelsolorio.fluent-icons",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Productivity
+    // ──────────────────────────────────────────────────────────────────────────
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-portuguese-brazilian",
+    "ms-vscode.live-share",
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // JSON, YAML, XML
+    // ──────────────────────────────────────────────────────────────────────────
+    "redhat.vscode-yaml",
+    "redhat.vscode-xml"
+  ]
+}

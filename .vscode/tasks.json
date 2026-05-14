@@ -1,0 +1,216 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ──────────────────────────────────────────────────────────────────────────
+    // BUILD TASKS — .NET Project
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      "label": "Build Identity Service",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["build", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj", "--nologo"],
+      "problemMatcher": ["$msCompile"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Clean & Build Identity Service",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["clean", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj", "&&", "dotnet", "build", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj"],
+      "problemMatcher": ["$msCompile"],
+      "group": "build"
+    },
+    {
+      "label": "Publish Identity Service",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["publish", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj", "-c", "Release"],
+      "problemMatcher": ["$msCompile"],
+      "group": "build"
+    },
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // DATABASE TASKS — EF Core Migrations
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      "label": "Database: Migrate",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["ef", "database", "update", "--project", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj"],
+      "problemMatcher": [],
+      "group": "test",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Database: Drop (Dev Only)",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["ef", "database", "drop", "--force", "--project", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj"],
+      "problemMatcher": [],
+      "group": "test",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Database: Reset (Drop + Migrate)",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-c", "cd backend/Scout.Identity.Api && dotnet ef database drop --force && dotnet ef database update"],
+      "problemMatcher": [],
+      "group": "test",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // DOCKER TASKS
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      "label": "Docker: Compose Up",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "-f", "infra/docker-compose.yml", "up", "-d"],
+      "problemMatcher": [],
+      "group": "test",
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Docker: Compose Down",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "-f", "infra/docker-compose.yml", "down"],
+      "problemMatcher": [],
+      "group": "test",
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Docker: Compose Logs (Follow)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "-f", "infra/docker-compose.yml", "logs", "-f"],
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*",
+          "endsPattern": "^.*"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Docker: Build Identity API",
+      "type": "shell",
+      "command": "docker",
+      "args": ["build", "-t", "scout-identity-api:latest", "-f", "backend/Scout.Identity.Api/Dockerfile", "backend/Scout.Identity.Api"],
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Docker: Health Check",
+      "type": "shell",
+      "command": "curl",
+      "args": ["-s", "http://localhost:5001/health"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // RUN TASKS
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      "label": "Run: Identity Service (Debug)",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["run", "--project", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj", "--configuration", "Debug"],
+      "problemMatcher": [],
+      "group": "test",
+      "isBackground": false,
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Run: Identity Service (Release)",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["run", "--project", "backend/Scout.Identity.Api/Scout.Identity.Api.csproj", "--configuration", "Release"],
+      "problemMatcher": [],
+      "group": "test",
+      "isBackground": false,
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // GIT TASKS
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      "label": "Git: Status",
+      "type": "shell",
+      "command": "git",
+      "args": ["status"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Git: Log (Last 10)",
+      "type": "shell",
+      "command": "git",
+      "args": ["log", "--oneline", "-10"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // LINTING TASKS
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      "label": "Lint: Markdown",
+      "type": "shell",
+      "command": "markdownlint",
+      "args": ["--fix", "**/*.md"],
+      "problemMatcher": [],
+      "group": "test",
+      "presentation": {
+        "reveal": "always"
+      }
+    }
+  ],
+
+  "inputs": []
+}

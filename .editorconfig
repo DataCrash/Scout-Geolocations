@@ -1,5 +1,14 @@
 root = true
 
+# ═════════════════════════════════════════════════════════════════════════════
+# EDITORCONFIG — Scout Geolocations
+# Padronização de formatação para todos os arquivos do projeto
+# Alinhado com: SOLID, YAGNI, DRY, KISS, Clean Code
+# ═════════════════════════════════════════════════════════════════════════════
+
+# ──────────────────────────────────────────────────────────────────────────────
+# TODOS OS ARQUIVOS
+# ──────────────────────────────────────────────────────────────────────────────
 [*]
 charset = utf-8
 end_of_line = lf
@@ -8,11 +17,205 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
+# ──────────────────────────────────────────────────────────────────────────────
+# MARKDOWN
+# ──────────────────────────────────────────────────────────────────────────────
 [*.md]
 trim_trailing_whitespace = false
+max_line_length = off
 
-[*.{cs,csproj,sln}]
+# ──────────────────────────────────────────────────────────────────────────────
+# C# / .NET — Indentação de 4 espaços (padrão .NET)
+# ──────────────────────────────────────────────────────────────────────────────
+[*.cs]
 indent_size = 4
 
+# Regras de nomenclatura (SOLID - Interface Segregation)
+# Interfaces devem começar com 'I'
+dotnet_naming_rule.interface_rule.severity = warning
+dotnet_naming_rule.interface_rule.symbols = interface_symbol
+dotnet_naming_rule.interface_rule.style = interface_style
+
+dotnet_naming_symbols.interface_symbol.applicable_kinds = interface
+dotnet_naming_symbols.interface_symbol.applicable_accessibilities = *
+dotnet_naming_symbols.interface_symbol.required_modifiers =
+
+dotnet_naming_style.interface_style.capitalization = pascal_case
+dotnet_naming_style.interface_style.required_prefix = I
+
+# Classes, estruturas devem ser PascalCase
+dotnet_naming_rule.class_rule.severity = warning
+dotnet_naming_rule.class_rule.symbols = class_symbol
+dotnet_naming_rule.class_rule.style = pascal_case_style
+
+dotnet_naming_symbols.class_symbol.applicable_kinds = class, struct, enum
+dotnet_naming_symbols.class_symbol.applicable_accessibilities = *
+
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# Métodos públicos devem ser PascalCase
+dotnet_naming_rule.method_rule.severity = warning
+dotnet_naming_rule.method_rule.symbols = method_symbol
+dotnet_naming_rule.method_rule.style = pascal_case_style
+
+dotnet_naming_symbols.method_symbol.applicable_kinds = method
+dotnet_naming_symbols.method_symbol.applicable_accessibilities = public, internal, protected
+
+# Propriedades devem ser PascalCase
+dotnet_naming_rule.property_rule.severity = warning
+dotnet_naming_rule.property_rule.symbols = property_symbol
+dotnet_naming_rule.property_rule.style = pascal_case_style
+
+dotnet_naming_symbols.property_symbol.applicable_kinds = property
+dotnet_naming_symbols.property_symbol.applicable_accessibilities = *
+
+# Campos privados devem ser _camelCase (DRY - Consistent naming)
+dotnet_naming_rule.private_field_rule.severity = warning
+dotnet_naming_rule.private_field_rule.symbols = private_field_symbol
+dotnet_naming_rule.private_field_rule.style = camel_case_underscore_style
+
+dotnet_naming_symbols.private_field_symbol.applicable_kinds = field
+dotnet_naming_symbols.private_field_symbol.applicable_accessibilities = private
+
+dotnet_naming_style.camel_case_underscore_style.capitalization = camel_case
+dotnet_naming_style.camel_case_underscore_style.required_prefix = _
+
+# Constantes devem ser UPPER_CASE (SOLID - Single Responsibility)
+dotnet_naming_rule.constant_rule.severity = warning
+dotnet_naming_rule.constant_rule.symbols = constant_symbol
+dotnet_naming_rule.constant_rule.style = upper_case_style
+
+dotnet_naming_symbols.constant_symbol.applicable_kinds = field
+dotnet_naming_symbols.constant_symbol.applicable_accessibilities = *
+dotnet_naming_symbols.constant_symbol.required_modifiers = const
+
+dotnet_naming_style.upper_case_style.capitalization = all_upper
+dotnet_naming_style.upper_case_style.word_separator = _
+
+# Código Style — SOLID, YAGNI, DRY, KISS
+# Use `this.` somente quando necessário (KISS - Keep It Simple)
+dotnet_style_qualification_for_field = false
+dotnet_style_qualification_for_property = false
+dotnet_style_qualification_for_method = false
+dotnet_style_qualification_for_event = false
+
+# Prefira Type inference (YAGNI - You Aren't Gonna Need It)
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true
+csharp_style_var_elsewhere = true
+
+# Prefira expression-bodied members (DRY - Don't Repeat Yourself)
+csharp_style_expression_bodied_methods = true:silent
+csharp_style_expression_bodied_constructors = true:silent
+csharp_style_expression_bodied_operators = true:silent
+csharp_style_expression_bodied_properties = true:silent
+csharp_style_expression_bodied_indexers = true:silent
+csharp_style_expression_bodied_accessors = true:silent
+
+# Prefira padrões de correspondência (Pattern Matching - Modern C#)
+csharp_style_pattern_matching_over_is_with_cast_check = true
+csharp_style_pattern_matching_over_as_with_null_check = true
+csharp_style_throw_expression = true
+
+# Prefira expressões null-coalescing (SOLID - Defensive Programming)
+csharp_style_coalesce_expression = true
+csharp_style_conditional_delegate_call = true
+csharp_style_inferred_anonymous_type_member_names = true
+
+# Organize usings (DRY - Consistent ordering)
+dotnet_separate_import_directive_groups = false
+dotnet_sort_system_directives_first = true
+
+# Indentação
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_indent_labels = one_less_than_current
+
+# Espaçamento
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_parentheses = false
+
+# Quebras de linha
+csharp_preserve_single_line_statements = false
+csharp_preserve_single_line_blocks = true
+
+# Chaves
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+
+# Wrapping
+csharp_wrap_after_declaration_lpar = false
+csharp_wrap_before_declaration_rpar = false
+csharp_wrap_after_invocation_lpar = false
+csharp_wrap_before_invocation_rpar = false
+csharp_wrap_after_binary_ternary_operators = true
+csharp_wrap_before_binary_ternary_operators = true
+csharp_wrap_chained_method_calls = chop_always
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CSPROJ / SLN — Projeto .NET
+# ──────────────────────────────────────────────────────────────────────────────
+[*.{csproj,sln}]
+indent_size = 2
+
+[*.csproj]
+indent_size = 2
+
+# ──────────────────────────────────────────────────────────────────────────────
+# JSON — Configurações
+# ──────────────────────────────────────────────────────────────────────────────
+[*.json]
+indent_size = 2
+charset = utf-8
+
+[*.jsonc]
+indent_size = 2
+charset = utf-8
+
+# ──────────────────────────────────────────────────────────────────────────────
+# YAML — Docker Compose, Kubernetes, CI/CD
+# ──────────────────────────────────────────────────────────────────────────────
+[*.{yml,yaml}]
+indent_size = 2
+indent_style = space
+
+# ──────────────────────────────────────────────────────────────────────────────
+# XML — Dockerfile, Configuration
+# ──────────────────────────────────────────────────────────────────────────────
+[*.xml]
+indent_size = 2
+
+# ──────────────────────────────────────────────────────────────────────────────
+# DOCKERFILE
+# ──────────────────────────────────────────────────────────────────────────────
+[Dockerfile]
+indent_size = 4
+indent_style = space
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SHELL / BASH
+# ──────────────────────────────────────────────────────────────────────────────
+[*.{sh,bash}]
+indent_size = 4
+indent_style = space
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PYTHON (para scripts futuros)
+# ──────────────────────────────────────────────────────────────────────────────
+[*.py]
+indent_size = 4
+indent_style = space
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MAKEFILE — Requer TABs por padrão
+# ──────────────────────────────────────────────────────────────────────────────
 [Makefile]
 indent_style = tab
+indent_size = 4

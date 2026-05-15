@@ -12,6 +12,13 @@ public class JwtService(IConfiguration config)
     {
         var key = config["Jwt:Key"]
             ?? throw new InvalidOperationException("Jwt:Key não configurado");
+        var keySizeInBytes = Encoding.UTF8.GetByteCount(key);
+
+        if (keySizeInBytes < 32)
+        {
+            throw new InvalidOperationException(
+                $"Jwt:Key deve ter pelo menos 32 bytes para HS256. Valor atual: {keySizeInBytes} bytes.");
+        }
 
         var signingKey  = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);

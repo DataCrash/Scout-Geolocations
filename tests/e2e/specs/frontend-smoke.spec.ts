@@ -22,12 +22,26 @@ const mockEventId = "00000000-0000-0000-0000-000000000001";
 
 async function prepareBrowserState(page: Parameters<typeof test>[0]["page"]) {
   await page.addInitScript(() => {
-    localStorage.setItem("access_token", "e2e-token");
+    localStorage.setItem(
+      "auth-store",
+      JSON.stringify({
+        state: {
+          token: "e2e-token",
+          user: {
+            id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            name: "E2E User",
+            role: "ChefesEscoteiro",
+          },
+        },
+        version: 0,
+      }),
+    );
   });
 }
 
 test.describe("frontend MVP smoke", () => {
   test("renderiza dashboard principal", async ({ page }) => {
+    await prepareBrowserState(page);
     await page.goto("/");
 
     await expect(
@@ -43,6 +57,7 @@ test.describe("frontend MVP smoke", () => {
   });
 
   test("exibe painel de QR check-in e admin", async ({ page }) => {
+    await prepareBrowserState(page);
     await page.goto("/");
 
     await expect(page.getByText(/Check-in por QR \(real\)/i)).toBeVisible();
@@ -58,6 +73,7 @@ test.describe("frontend MVP smoke", () => {
   });
 
   test("simula incremento visual do leaderboard", async ({ page }) => {
+    await prepareBrowserState(page);
     await page.goto("/");
 
     const before = page

@@ -8,7 +8,7 @@ using Scout.Challenge.Api.Infrastructure;
 
 namespace Scout.Challenge.Api.Services;
 
-public class ChallengeService(ChallengeDbContext db, IMediator mediator)
+public class ChallengeService(ChallengeDbContext db, IMediator mediator, ILogger<ChallengeService> logger)
 {
     // ── Haversine ─────────────────────────────────────────────────────────────
 
@@ -117,7 +117,15 @@ public class ChallengeService(ChallengeDbContext db, IMediator mediator)
                         && a.Status == AttemptStatus.Validated, ct);
 
         if (alreadyValidated)
+        {
+            logger.LogWarning(
+                "AUDIT checkin.duplicate challengeId={ChallengeId} patrulhaId={PatrulhaId} userId={UserId}",
+                challengeId,
+                req.PatrulhaId,
+                req.UserId);
+
             throw new InvalidOperationException("Patrulha já validou este desafio");
+        }
 
         var attempt = new ChallengeAttempt
         {
@@ -152,6 +160,15 @@ public class ChallengeService(ChallengeDbContext db, IMediator mediator)
             await mediator.Publish(new ChallengeValidated(
                 attempt.Id, challengeId, req.PatrulhaId, req.UserId,
                 attempt.PointsAwarded, attempt.ValidatedAt.Value), ct);
+
+            logger.LogInformation(
+                "AUDIT checkin.validated attemptId={AttemptId} challengeId={ChallengeId} patrulhaId={PatrulhaId} userId={UserId} points={PointsAwarded} distanceMeters={DistanceMeters}",
+                attempt.Id,
+                challengeId,
+                req.PatrulhaId,
+                req.UserId,
+                attempt.PointsAwarded,
+                attempt.DistanceMeters);
         }
         else
         {
@@ -165,6 +182,15 @@ public class ChallengeService(ChallengeDbContext db, IMediator mediator)
             await mediator.Publish(new ChallengeFailed(
                 attempt.Id, challengeId, req.PatrulhaId, req.UserId,
                 failReason!, attempt.AttemptedAt), ct);
+
+            logger.LogWarning(
+                "AUDIT checkin.failed attemptId={AttemptId} challengeId={ChallengeId} patrulhaId={PatrulhaId} userId={UserId} reason={FailReason} distanceMeters={DistanceMeters}",
+                attempt.Id,
+                challengeId,
+                req.PatrulhaId,
+                req.UserId,
+                attempt.FailReason,
+                attempt.DistanceMeters);
         }
 
         return MapAttemptResponse(attempt);

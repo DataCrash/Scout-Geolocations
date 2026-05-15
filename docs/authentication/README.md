@@ -3,12 +3,14 @@
 ## Guias Disponíveis
 
 ### 1. [OAuth2-Setup.md](./OAuth2-Setup.md)
-**Para**: Configurar Google Cloud Console e entender arquitetura OAuth2
+
+**Para**: Configurar Google Cloud Console e entender o fluxo OAuth2 por redirect
 
 Cobre:
+
 - Criação de projeto no Google Cloud
 - OAuth 2.0 Credentials setup
-- Fluxo redirect vs. direct token
+- Fluxo redirect via backend
 - Configuração de backend (.NET)
 - Configuração de frontend (React)
 - Troubleshooting de erros comuns
@@ -18,9 +20,11 @@ Cobre:
 ---
 
 ### 2. [MANUAL-OAUTH2-VALIDATION.md](./MANUAL-OAUTH2-VALIDATION.md)
+
 **Para**: Validação passo-a-passo do fluxo completo
 
 Cobre:
+
 - Setup Google Cloud Console com screenshots
 - Configuração de variáveis de ambiente (.env)
 - Iniciar backend, frontend e banco de dados
@@ -88,35 +92,35 @@ RUN_REAL_BACKEND_E2E=1 npm test -- oauth2-google-real.spec.ts
 ┌─────────────┐                  ┌──────────────┐
 │   Browser   │                  │   Google     │
 └──────┬──────┘                  └──────────────┘
-       │                               
-       │ 1. Click "Sign in"            
+       │
+       │ 1. Click "Sign in"
        ├──────────────────────────────>
        │   POST /auth/google/authorize
-       │                              
-       │ 2. Backend returns Google URL  
+       │
+       │ 2. Backend returns Google URL
        │<──────────────────────────────┤
-       │   + state parameter           
-       │                              
-       │ 3. Browser redirects to Google 
+       │   + state parameter
+       │
+       │ 3. Browser redirects to Google
        ├─────────────────────────────────────────>
-       │                                          
-       │ 4. User authenticates                    
-       │                                          
-       │ 5. Google redirects with code            
+       │
+       │ 4. User authenticates
+       │
+       │ 5. Google redirects with code
        │<─────────────────────────────────────────┤
        │   /auth/google/callback?code=XXX&state=Y
-       │                              
-       │ 6. Backend validates code    
-       │    and generates JWT        
-       │                              
+       │
+       │ 6. Backend validates code
+       │    and generates JWT
+       │
        │ 7. Backend redirects to frontend
-       │    with token in URL        
+       │    with token in URL
        │<──────────────────────────────┤
        │   /auth/callback?token=JWT&user=...
-       │                              
-       │ 8. Frontend stores token    
-       │    in localStorage          
-       │                              
+       │
+       │ 8. Frontend stores token
+       │    in localStorage
+       │
        └─────────────────────────────┘
          Dashboard loaded
 ```
@@ -126,12 +130,18 @@ RUN_REAL_BACKEND_E2E=1 npm test -- oauth2-google-real.spec.ts
 ## Variáveis de Ambiente
 
 ### Backend (.env ou appsettings.Development.json)
+
 ```json
 {
   "Google": {
     "ClientId": "xxx-yyy.apps.googleusercontent.com",
     "ClientSecret": "GOCSP_xxxxxx",
     "RedirectUri": "http://localhost:5001/auth/google/callback"
+  },
+  "Jwt": {
+    "Key": "dev_secret_key_min_32_chars_for_testing_only",
+    "Issuer": "scout-identity",
+    "Audience": "scout-apps"
   },
   "App": {
     "FrontendUrl": "http://localhost:5173",
@@ -141,9 +151,9 @@ RUN_REAL_BACKEND_E2E=1 npm test -- oauth2-google-real.spec.ts
 ```
 
 ### Frontend (.env.local)
+
 ```env
 VITE_API_URL=http://localhost:5001
-VITE_GOOGLE_CLIENT_ID=xxx-yyy.apps.googleusercontent.com
 ```
 
 ---
@@ -151,25 +161,30 @@ VITE_GOOGLE_CLIENT_ID=xxx-yyy.apps.googleusercontent.com
 ## Status de Implementação
 
 ✅ **Backend**
+
 - GoogleOAuthService implementado
 - POST /auth/google/authorize — inicia fluxo
 - GET /auth/google/callback — processa redirect
+- POST /auth/google — endpoint legado para troca direta de `idToken`
 - Validação de domínio @escoteiros.org.br
 - Auto-role assignment baseado em email
 
 ✅ **Frontend**
-- LoginPage com Google Sign-In
+
+- LoginPage com redirect para Google via backend
 - OAuthCallbackPage para processar callback
 - useAuthStore com Zustand + localStorage
 - ProtectedRoute para rotas autenticadas
 - React Router configurado
 
 ✅ **Documentation**
+
 - OAuth2-Setup.md — Configuração
 - MANUAL-OAUTH2-VALIDATION.md — Validação
 - E2E tests (oauth2-google-real.spec.ts)
 
 ✅ **Git**
+
 - PR #24 merged para develop
 - 4 commits com histórico linear (Forward-Only)
 
@@ -199,6 +214,7 @@ VITE_GOOGLE_CLIENT_ID=xxx-yyy.apps.googleusercontent.com
 ## Suporte
 
 Para dúvidas ou problemas:
+
 1. Verifique a seção "Troubleshooting" em MANUAL-OAUTH2-VALIDATION.md
 2. Verifique logs do backend (`dotnet run` output)
 3. Verifique console do navegador (F12 → Console)

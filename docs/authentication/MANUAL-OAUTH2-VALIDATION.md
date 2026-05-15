@@ -51,6 +51,7 @@
 ### 1.4 Configuração Final
 
 Guarde:
+
 ```
 CLIENT_ID = "xxx-yyy.apps.googleusercontent.com"
 CLIENT_SECRET = "GOCSP_xxxxxx"
@@ -72,6 +73,11 @@ Abra `backend/Scout.Identity.Api/appsettings.Development.json` e confirme:
     "ClientSecret": "seu-client-secret",
     "RedirectUri": "http://localhost:5001/auth/google/callback"
   },
+  "Jwt": {
+    "Key": "dev_secret_key_min_32_chars_for_testing_only",
+    "Issuer": "scout-identity",
+    "Audience": "scout-apps"
+  },
   "App": {
     "FrontendUrl": "http://localhost:5173",
     "InitialAdminEmail": "seu-chefe@escoteiros.org.br"
@@ -88,7 +94,6 @@ Crie `frontend/scout-web/.env.local` (copie de `.env.example`):
 
 ```env
 VITE_API_URL=http://localhost:5001
-VITE_GOOGLE_CLIENT_ID=seu-client-id.apps.googleusercontent.com
 ```
 
 ---
@@ -121,6 +126,7 @@ dotnet run --configuration Debug
 ```
 
 Output esperado:
+
 ```
 info: Microsoft.Hosting.Lifetime[14]
       Now listening on: http://localhost:5001
@@ -139,6 +145,7 @@ npm run dev
 ```
 
 Output esperado:
+
 ```
 VITE v5.x.x ready in X ms
 
@@ -153,7 +160,7 @@ VITE v5.x.x ready in X ms
 
 1. Abra http://localhost:5173/login
 2. Veja a página com 2 opções:
-   - **Sign in with Google** (botão com logo Google)
+   - **Sign in with Google**
    - **Guest Login** (form com input de nome)
 3. Preencha nome: `Teste Local [DATA]`
 4. Clique **Login as Guest**
@@ -184,6 +191,7 @@ VITE v5.x.x ready in X ms
 #### 2c. Backend Processing
 
 Backend neste ponto:
+
 1. Valida `code` com Google
 2. Obtém `id_token` do Google
 3. Extrai email do token
@@ -201,6 +209,7 @@ Backend neste ponto:
 #### 2d. Frontend Processing
 
 Frontend:
+
 1. OAuthCallbackPage extrai params
 2. Armazena token em localStorage via Zustand
 3. Redireciona para dashboard
@@ -249,9 +258,9 @@ Frontend:
 docker exec -it scout-postgres psql -U postgres -d scout_identity
 
 # SQL:
-SELECT id, email, name, role, created_at FROM users 
-WHERE email LIKE '%escoteiros%' 
-ORDER BY created_at DESC 
+SELECT id, email, name, role, created_at FROM users
+WHERE email LIKE '%escoteiros%'
+ORDER BY created_at DESC
 LIMIT 5;
 
 # Esperado: Seu usuário com role ChefesEscoteiro ou Integrante
@@ -329,6 +338,7 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 **Causa**: Google não reconhece a URI configurada
 
 **Solução**:
+
 1. Google Cloud Console → Credentials
 2. Clique no client ID `Scout Local Dev`
 3. Confirme **Authorized redirect URIs** inclui:
@@ -342,6 +352,7 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 **Causa**: Email não é @escoteiros.org.br
 
 **Solução**:
+
 1. Use conta Google com domínio @escoteiros.org.br
 2. Ou altere `INITIAL_ADMIN_EMAIL` em appsettings para testar
 
@@ -352,6 +363,7 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 **Causa**: Token inválido ou localStorage corrompido
 
 **Solução**:
+
 1. Limpe localStorage: `localStorage.clear()` no console
 2. Limpe cookies: DevTools → Application → Cookies → delete all
 3. Faça login novamente
@@ -363,9 +375,23 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 **Causa**: Backend não está rodando
 
 **Solução**:
+
 1. Verifique se terminal do backend está ativo
 2. Confirme output: "Now listening on: http://localhost:5001"
 3. Reinicie: `dotnet run --configuration Debug`
+
+---
+
+### Problema: "IDX10720" / chave JWT curta
+
+**Causa**: `Jwt:Key` com menos de 32 bytes para HS256
+
+**Solução**:
+
+1. Abra `backend/Scout.Identity.Api/appsettings.Development.json`
+2. Confirme que `Jwt:Key` tem ao menos 32 bytes
+3. Se estiver usando Docker/variável de ambiente, alinhe `JWT_KEY` ou `Jwt__Key`
+4. Reinicie a Identity API
 
 ---
 
@@ -374,6 +400,7 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 **Causa**: Configuração CORS incorreta
 
 **Solução**:
+
 1. Verifique `Program.cs`:
    ```csharp
    builder.Services.AddCors(options =>

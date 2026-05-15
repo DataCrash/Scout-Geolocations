@@ -38,6 +38,9 @@
 
 - [x] Challenge Service implementado com validação por QR/localização e leaderboard realtime via SignalR.
 - [x] Frontend MVP com mapa, check-in QR, leaderboard e painel Admin CRUD.
+- [x] Login Google OAuth validado manualmente em navegador real (fora do browser embutido de automação).
+- [x] Fluxo real de Patrulha via QR validado para convidado (criar patrulha, gerar invite, join e membros).
+- [x] Check-in real validado em cenário positivo e negativo com score consistente (25 pontos no sucesso; 0 no QR inválido).
 - [x] Base de E2E Playwright criada e expandida para fluxos mockados de check-in e admin.
 - [x] Pipeline `CI (develop)` atualizado para executar E2E do frontend.
 - [x] Spec E2E integrado opt-in adicionado para autenticação real
@@ -50,11 +53,26 @@
       (QR inválido com tentativa falha e score da Patrulha zerado).
 - [x] Spec E2E integrado opt-in adicionado para admin real da Challenge API
       (CRUD de desafios com role ChefesEscoteiro e bloqueio de role sem privilégio).
+- [x] Spec E2E integrado opt-in adicionado para admin real da Identity API
+      (listagem de usuários/patrulhas, alteração de role e solicitação de exclusão de dados de localização).
+- [x] Spec E2E integrado opt-in adicionado para admin real da Cache API
+      (CRUD de caches com role ChefesEscoteiro e bloqueio de delete sem privilégio).
+- [x] Spec E2E integrado opt-in adicionado para admin real de Roteiros
+      (CRUD em `/api/admin/roteiros` com role ChefesEscoteiro e bloqueio de role sem privilégio).
+- [x] Suíte admin real expandida para incluir roteiros (`admin-roteiro-real.spec.ts`) no script `test:real:admin`.
+- [x] Spec real de roteiros validado com sucesso em execução isolada (2 testes passados).
 - [x] Hardening dos specs E2E reais concluído com preflights padronizados,
       mensagens de skip/healthcheck consistentes e tipos compartilhados em helper comum.
 - [x] Falha histórica da PR #20 no CI diagnosticada (helper compartilhado ausente no run) e
       resolvida no fluxo seguinte com PR #21 e execução CI verde.
 - [ ] Fluxos ponta a ponta completos com autenticação real e backend real ainda pendentes.
+
+### Diretrizes transversais de stack (Roadmap)
+
+- [ ] Adotar Zod gradualmente no frontend para validação de payloads de API, formulários e normalização de erros.
+- [ ] Expandir uso de Radix UI gradualmente nos componentes de interface, priorizando acessibilidade e consistência visual.
+- [ ] Ao final do roadmap, se houver áreas sem Zod/Radix, organizar força-tarefa dedicada para concluir a implantação.
+- [ ] tRPC permanece fora do escopo atual com backend .NET; adotar somente se for criado um BFF em TypeScript.
 
 ### Plano de fechamento do M1 (M1-Closing)
 
@@ -64,12 +82,13 @@
 
 #### Critérios de saída do M1
 
-- [ ] Evento seed oficial disponível com pelo menos 1 roteiro e 5 caches para validação.
-- [ ] Fluxo real de login do Monitor via Google @escoteiros.org.br validado ponta a ponta.
-- [ ] Fluxo real de entrada por QR de Patrulha validado para convidado e conta @escoteiros.org.br.
-- [ ] Check-in real por QR validado em cenário positivo e negativo com score consistente.
-- [ ] Painel admin validado com cobertura de CRUD para roteiros, caches, desafios, equipes e Chefes.
-- [ ] Logs estruturados e trilha de auditoria mínimos documentados e verificáveis.
+- [x] Evento seed oficial disponível com pelo menos 1 roteiro e 5 caches para validação.
+- [x] Fluxo real de login do Monitor via Google @escoteiros.org.br validado ponta a ponta.
+- [x] Fluxo real de entrada por QR de Patrulha validado para convidado e conta @escoteiros.org.br.
+- [x] Check-in real por QR validado em cenário positivo e negativo com score consistente.
+- [x] Painel admin validado com cobertura de CRUD para roteiros, caches, desafios, equipes e Chefes.
+- [x] Logs estruturados e trilha de auditoria mínimos documentados e verificáveis.
+      Evidência: `docs/operations/Observability-Audit.md` + eventos `AUDIT` implementados nos fluxos críticos.
 
 #### Pacotes de entrega (ordem recomendada)
 
@@ -79,6 +98,9 @@
 2. **Autenticação real de produção piloto**
    - Validar login Google real para Monitor e sessão autenticada no frontend.
    - Registrar configuração mínima de ambiente para execução controlada do piloto.
+     - [Backlog UX] Definir personalização do fluxo de login: branding da tela de consentimento OAuth
+       (nome/logo/cor no Google Cloud) e evolução da página interna de pré-login no frontend.
+       Observação: a tela hospedada do Google não permite customização completa de layout.
 3. **Admin coverage de MVP**
    - Completar cenários E2E/admin para entidades fora de Challenge API quando aplicável.
    - Garantir matriz de permissão por role em operações críticas.
@@ -88,6 +110,23 @@
 5. **Gate de aceite e encerramento de fase**
    - Rodar suíte E2E de aceite do M1 com evidência de resultado.
    - Emitir decisão formal de encerramento do M1 no plano e iniciar M2.
+
+#### Gate de aceite — Decisão formal de encerramento M1
+
+**Data:** 2026-05-15
+**Resultado:** **APROVADO** — M1 encerrado.
+
+**Evidências:**
+- Suíte E2E completa: 26 passed / 0 failed / 4 skipped (run com todos os backends ativos; skips são serviço não disponível no ambiente, comportamento correto).
+- Specs corrigidos e estabilizados:
+  - `frontend-smoke.spec.ts` — auth-store injetado no formato Zustand persist.
+  - `oauth2-google-real.spec.ts` — 11/11 passed (scope via URL parsing, SecurityError resolvido, asserts de redirect/logout robustecidos).
+  - `frontend-real-backend.spec.ts` — auth-store injetado corretamente (substituição de `access_token` legada).
+  - `admin-roteiro-real.spec.ts` — 2/2 passed (CRUD em `/api/admin/roteiros`).
+- 46 eventos AUDIT estruturados em Identity, Challenge e Cache APIs (ver `docs/operations/Observability-Audit.md`).
+- Todos os 6 critérios de saída do M1 marcados [x].
+
+**Decisão:** iniciar M2 (Visão Computacional) como próxima fase ativa.
 
 #### Riscos atuais do M1
 

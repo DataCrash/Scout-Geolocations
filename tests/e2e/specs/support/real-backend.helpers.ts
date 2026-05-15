@@ -66,7 +66,10 @@ export const identityApiUrl =
 export const challengeApiUrl =
   process.env.CHALLENGE_API_URL ?? "http://localhost:5004";
 
+export const cacheApiUrl = process.env.CACHE_API_URL ?? "http://localhost:5002";
+
 export const seedEventId = "00000000-0000-0000-0000-000000000001";
+export const seedRoteiroId = "00000000-0000-0000-0000-000000000201";
 export const seedChallengeId =
   process.env.REAL_E2E_CHALLENGE_ID ?? "00000000-0000-0000-0000-000000000010";
 export const seedChallengeQrCode = process.env.REAL_E2E_QR ?? "QR-DEMO-001";
@@ -221,6 +224,40 @@ export async function probeChallengeAuthStatus(
 ): Promise<number> {
   const response = await request.get(
     `${challengeApiUrl}/api/challenges?eventId=${eventId}`,
+    {
+      headers: {
+        ...authHeader(token),
+      },
+    },
+  );
+
+  return response.status();
+}
+
+export async function probeCacheAuthStatus(
+  request: APIRequestContext,
+  token: string,
+  eventId = seedEventId,
+): Promise<number> {
+  const response = await request.get(
+    `${cacheApiUrl}/api/geocaches/event/${eventId}`,
+    {
+      headers: {
+        ...authHeader(token),
+      },
+    },
+  );
+
+  return response.status();
+}
+
+export async function probeRoteiroAdminAuthStatus(
+  request: APIRequestContext,
+  token: string,
+  eventId = seedEventId,
+): Promise<number> {
+  const response = await request.get(
+    `${cacheApiUrl}/api/admin/roteiros/event/${eventId}`,
     {
       headers: {
         ...authHeader(token),

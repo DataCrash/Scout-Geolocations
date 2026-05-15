@@ -7,7 +7,7 @@ using Scout.Identity.Api.Infrastructure;
 
 namespace Scout.Identity.Api.Services;
 
-public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
+public class PatrulhaService(IdentityDbContext db, IPublisher publisher, ILogger<PatrulhaService> logger)
 {
     private static readonly TimeSpan DefaultInviteValidity = TimeSpan.FromHours(8);
 
@@ -15,8 +15,8 @@ public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
     {
         var patrulha = new Patrulha
         {
-            Id        = Guid.NewGuid(),
-            Name      = name.Trim(),
+            Id = Guid.NewGuid(),
+            Name = name.Trim(),
             MonitorId = monitorId,
             CreatedAt = DateTime.UtcNow,
         };
@@ -25,8 +25,8 @@ public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
         db.PatrulhaMembers.Add(new PatrulhaMember
         {
             PatrulhaId = patrulha.Id,
-            UserId     = monitorId,
-            JoinedAt   = DateTime.UtcNow,
+            UserId = monitorId,
+            JoinedAt = DateTime.UtcNow,
         });
 
         var monitor = await db.Users.FindAsync([monitorId], ct)
@@ -36,6 +36,12 @@ public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
 
         await db.SaveChangesAsync(ct);
         await publisher.Publish(new PatrulhaCreatedEvent(patrulha.Id, monitorId, patrulha.Name), ct);
+
+        logger.LogInformation(
+            "AUDIT patrulha.created patrulhaId={PatrulhaId} monitorId={MonitorId} name={PatrulhaName}",
+            patrulha.Id,
+            monitorId,
+            patrulha.Name);
 
         return patrulha;
     }
@@ -59,16 +65,23 @@ public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
 
         var invite = new PatrulhaInvite
         {
-            Id          = Guid.NewGuid(),
-            PatrulhaId  = patrulhaId,
-            Token       = Guid.NewGuid().ToString("N"),
+            Id = Guid.NewGuid(),
+            PatrulhaId = patrulhaId,
+            Token = Guid.NewGuid().ToString("N"),
             CreatedById = requesterId,
-            ExpiresAt   = DateTime.UtcNow.Add(DefaultInviteValidity),
-            IsRevoked   = false,
+            ExpiresAt = DateTime.UtcNow.Add(DefaultInviteValidity),
+            IsRevoked = false,
         };
 
         db.PatrulhaInvites.Add(invite);
         await db.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "AUDIT patrulha.invite.generated patrulhaId={PatrulhaId} requesterId={RequesterId} inviteId={InviteId} expiresAt={ExpiresAt}",
+            patrulhaId,
+            requesterId,
+            invite.Id,
+            invite.ExpiresAt);
 
         return invite;
     }
@@ -79,20 +92,33 @@ public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
             .FirstOrDefaultAsync(i => i.Token == token, ct);
 
         if (invite is null || !invite.IsValid)
+        {
+            logger.LogWarning(
+                "AUDIT patrulha.join.invalid_token userId={UserId}",
+                userId);
+
             return null;
+        }
 
         var alreadyMember = await db.PatrulhaMembers
             .AnyAsync(m => m.PatrulhaId == invite.PatrulhaId && m.UserId == userId, ct);
 
         if (alreadyMember)
+        {
+            logger.LogInformation(
+                "AUDIT patrulha.join.already_member patrulhaId={PatrulhaId} userId={UserId}",
+                invite.PatrulhaId,
+                userId);
+
             return await db.PatrulhaMembers
                 .FirstAsync(m => m.PatrulhaId == invite.PatrulhaId && m.UserId == userId, ct);
+        }
 
         var member = new PatrulhaMember
         {
             PatrulhaId = invite.PatrulhaId,
-            UserId     = userId,
-            JoinedAt   = DateTime.UtcNow,
+            UserId = userId,
+            JoinedAt = DateTime.UtcNow,
         };
 
         db.PatrulhaMembers.Add(member);
@@ -100,6 +126,12 @@ public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
 
         var user = await db.Users.FindAsync([userId], ct);
         await publisher.Publish(new MemberJoinedEvent(invite.PatrulhaId, userId, user!.Role), ct);
+
+        logger.LogInformation(
+            "AUDIT patrulha.member.joined patrulhaId={PatrulhaId} userId={UserId} role={Role}",
+            invite.PatrulhaId,
+            userId,
+            user.Role);
 
         return member;
     }
@@ -136,5 +168,11 @@ public class PatrulhaService(IdentityDbContext db, IPublisher publisher)
 
         await db.SaveChangesAsync(ct);
         await publisher.Publish(new SubmonitorAssignedEvent(patrulhaId, newSubmonitorId), ct);
+
+        logger.LogInformation(
+            "AUDIT patrulha.submonitor.assigned patrulhaId={PatrulhaId} requesterId={RequesterId} submonitorId={SubmonitorId}",
+            patrulhaId,
+            requesterId,
+            newSubmonitorId);
     }
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Scout Geolocations uses **Google OAuth 2.0** for authenticating users with `@escoteiros.org.br` email addresses. The authentication flow supports both:
+Scout Geolocations uses **Google OAuth 2.0** for authenticating users with `@escoteiros.org.br` email addresses. The current frontend uses:
 
 1. **Redirect Flow (Recommended)** — Server-side OAuth2 with browser redirect
    - User clicks "Sign in with Google"
@@ -10,9 +10,8 @@ Scout Geolocations uses **Google OAuth 2.0** for authenticating users with `@esc
    - Google redirects back to `/auth/google/callback`
    - Backend exchanges code for JWT token and redirects to frontend
 
-2. **Direct Token Flow (Legacy)** — Frontend obtains ID token and sends to backend
-   - Frontend uses Google Sign-In JavaScript library
-   - Frontend sends ID token to `/auth/google`
+2. **Direct Token Flow (Legacy API)** — Available only for backend/API compatibility
+   - A client may send a Google ID token to `/auth/google`
    - Backend validates and returns JWT
 
 ## Setup: Google Cloud Console
@@ -48,6 +47,7 @@ Scout Geolocations uses **Google OAuth 2.0** for authenticating users with `@esc
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:5001/auth/google/callback
+JWT_KEY=dev_secret_key_min_32_chars_for_testing_only
 ```
 
 #### Production
@@ -132,43 +132,7 @@ Response:
 
 ## Frontend Integration
 
-### Option 1: Google Sign-In JavaScript Library (Recommended)
-
-Install Google sign-in library:
-
-```bash
-npm install @react-oauth/google
-```
-
-Example React component:
-
-```typescript
-import { GoogleLogin } from '@react-oauth/google';
-
-export function LoginPage() {
-  return (
-    <GoogleLogin
-      onSuccess={(credentialResponse) => {
-        fetch('/api/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            idToken: credentialResponse.credential
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          localStorage.setItem('token', data.token);
-          window.location.href = '/dashboard';
-        });
-      }}
-      onError={() => console.log('Login Failed')}
-    />
-  );
-}
-```
-
-### Option 2: OAuth2 Redirect Flow
+### OAuth2 Redirect Flow
 
 ```typescript
 async function initiateGoogleOAuth() {
@@ -222,9 +186,9 @@ When a user authenticates via Google, they are automatically assigned a role:
 - Verify `GOOGLE_REDIRECT_URI` matches exactly what's configured in Google Cloud Console
 - Common issue: trailing slashes or `http` vs `https`
 
-### JWT Token not working
+### JWT Token not working / IDX10720
 
-- Verify `JWT_KEY` environment variable is set (min 32 bytes)
+- Verify `JWT_KEY` environment variable is set with at least 32 bytes
 - Check token expiration (default: 8 hours)
 - Validate `Authorization: Bearer TOKEN` header format
 
@@ -252,5 +216,4 @@ See [E2E Testing Guide](../e2e/README.md) for Playwright specs with real OAuth2 
 ## References
 
 - [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
-- [Google Sign-In JavaScript Library](https://developers.google.com/identity/sign-in/web)
-- [React OAuth Google Package](https://www.npmjs.com/package/@react-oauth/google)
+- [Google Identity / OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)

@@ -1,18 +1,18 @@
-import { useEffect, useRef } from 'react'
-import { Compass, Trophy } from 'lucide-react'
-import L from 'leaflet'
-import { Button } from '@/components/ui/button'
-import { useLeaderboardStore } from '@/store/useLeaderboardStore'
+import { Button } from "@/components/ui/button";
+import { useLeaderboardStore } from "@/store/useLeaderboardStore";
+import L from "leaflet";
+import { Compass, Trophy } from "lucide-react";
+import { useEffect, useRef } from "react";
 
-const center: [number, number] = [-23.5505, -46.6333]
+const center: [number, number] = [-23.5505, -46.6333];
 
 function App() {
-  const { eventId, scores, bumpPatrol } = useLeaderboardStore()
-  const mapRef = useRef<HTMLDivElement | null>(null)
+  const { eventId, scores, bumpPatrol } = useLeaderboardStore();
+  const mapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!mapRef.current) {
-      return
+      return;
     }
 
     const map = L.map(mapRef.current, {
@@ -20,31 +20,31 @@ function App() {
       zoom: 15,
       zoomControl: false,
       scrollWheelZoom: false,
-    })
+    });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map)
+    }).addTo(map);
 
     L.circle(center, {
       radius: 120,
-      color: '#0891b2',
-      fillColor: '#22d3ee',
+      color: "#0891b2",
+      fillColor: "#22d3ee",
       fillOpacity: 0.2,
-    }).addTo(map)
+    }).addTo(map);
 
     L.circle([-23.5513, -46.6349], {
       radius: 80,
-      color: '#ea580c',
-      fillColor: '#fb923c',
+      color: "#ea580c",
+      fillColor: "#fb923c",
       fillOpacity: 0.22,
-    }).addTo(map)
+    }).addTo(map);
 
     return () => {
-      map.remove()
-    }
-  }, [])
+      map.remove();
+    };
+  }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
@@ -64,7 +64,7 @@ function App() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button onClick={() => bumpPatrol('lobo', 15)}>
+            <Button onClick={() => bumpPatrol("lobo", 15)}>
               Simular validação (+15)
             </Button>
             <Button variant="ghost">Evento: {eventId}</Button>
@@ -113,7 +113,7 @@ function App() {
         </aside>
       </div>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;

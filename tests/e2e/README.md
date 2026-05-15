@@ -24,6 +24,9 @@ npm test
 - Check-in QR com geolocalização usa payload esperado e trata resposta de sucesso.
 - Painel Admin executa ciclo de criar, recarregar, alterar status e excluir com mocks.
 - Spec integrado opcional valida autenticação real (`/auth/guest` + `/auth/me`) e tentativa real de check-in sem `page.route`.
+- Spec integrado opcional valida fluxo real de Patrulha:
+  criação por Monitor, convite por token QR,
+  entrada de integrante e nomeação de Submonitor.
 
 ## Execução integrada (backend real)
 
@@ -32,6 +35,13 @@ Use quando Identity API e Challenge API estiverem ativas localmente:
 ```bash
 cd tests/e2e
 RUN_REAL_BACKEND_E2E=1 npm test -- frontend-real-backend.spec.ts
+```
+
+Para fluxo real de Identity/Patrulha:
+
+```bash
+cd tests/e2e
+RUN_REAL_BACKEND_E2E=1 npm test -- identity-patrulha-real.spec.ts
 ```
 
 Variáveis opcionais:

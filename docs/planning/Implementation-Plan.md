@@ -42,6 +42,8 @@
 - [x] Pipeline `CI (develop)` atualizado para executar E2E do frontend.
 - [x] Spec E2E integrado opt-in adicionado para autenticação real
       (`/auth/guest` + `/auth/me`) e tentativa de check-in sem mocks.
+- [x] Spec E2E integrado opt-in adicionado para fluxo real de Patrulha
+      (criar patrulha, gerar convite QR token, entrar na patrulha e definir submonitor).
 - [ ] Fluxos ponta a ponta completos com autenticação real e backend real ainda pendentes.
 
 ---

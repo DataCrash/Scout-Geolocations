@@ -1,14 +1,17 @@
 import { Button } from "@/components/ui/button";
+import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import L from "leaflet";
 import { Compass, Trophy } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const center: [number, number] = [-23.5505, -46.6333];
 
 function App() {
-  const { eventId, scores, bumpPatrol } = useLeaderboardStore();
+  const { eventId, scores, bumpPatrol, applyRealtimeUpdate, lastRealtimeAt } =
+    useLeaderboardStore();
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
 
   useEffect(() => {
     if (!mapRef.current) {
@@ -46,6 +49,39 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    let stop: (() => Promise<void>) | undefined;
+
+    connectLeaderboardRealtime(eventId, {
+      onConnected: () => {
+        if (active) {
+          setIsRealtimeConnected(true);
+        }
+      },
+      onDisconnected: () => {
+        if (active) {
+          setIsRealtimeConnected(false);
+        }
+      },
+      onUpdate: (payload) => {
+        applyRealtimeUpdate(payload);
+      },
+      onError: () => {
+        if (active) {
+          setIsRealtimeConnected(false);
+        }
+      },
+    }).then((client) => {
+      stop = client.disconnect;
+    });
+
+    return () => {
+      active = false;
+      void stop?.();
+    };
+  }, [applyRealtimeUpdate, eventId]);
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(34,211,238,0.22),transparent_35%),radial-gradient(circle_at_85%_10%,rgba(251,146,60,0.2),transparent_30%),linear-gradient(140deg,#f2fbfe_0%,#eff6ff_45%,#fffaf2_100%)]" />
@@ -64,10 +100,24 @@ function App() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button onClick={() => bumpPatrol("lobo", 15)}>
+            <Button onClick={() => bumpPatrol("11111111-1111-1111-1111-111111111111", 15)}>
               Simular validação (+15)
             </Button>
             <Button variant="ghost">Evento: {eventId}</Button>
+            <span
+              className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] ${
+                isRealtimeConnected
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-amber-200 bg-amber-50 text-amber-700"
+              }`}
+            >
+              {isRealtimeConnected ? "SignalR conectado" : "SignalR offline"}
+            </span>
+            {lastRealtimeAt && (
+              <span className="text-xs text-muted-foreground">
+                Última atualização: {new Date(lastRealtimeAt).toLocaleTimeString("pt-BR")}
+              </span>
+            )}
           </div>
 
           <div className="mt-8 rounded-2xl border border-border/70 bg-white/70 p-4">

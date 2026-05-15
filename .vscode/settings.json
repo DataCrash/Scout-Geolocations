@@ -116,7 +116,7 @@
     "cSpell.enabled": true,
     "editor.tabSize": 4,
     "editor.codeActionsOnSave": {
-      "source.fixAll": "explicit",
+      "source.fixAll": "always",
       "source.organizeImports": "explicit"
     }
   },
@@ -154,14 +154,7 @@
   // ──────────────────────────────────────────────────────────────────────────────
   // JSON & YAML Formatting
   // ──────────────────────────────────────────────────────────────────────────────
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "cSpell.enabled": true,
-    "editor.tabSize": 2
-  },
-
-  "[jsonc]": {
+  "[json, jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "cSpell.enabled": true,
@@ -176,15 +169,16 @@
     "editor.insertSpaces": true
   },
 
-  "[typescript]": {
+  "[typescript, typescriptreact, javascript, javascriptreact]": {
     "js/ts.format.semicolons": "insert",
+    "js/ts.suggest.autoImports": true,
     "cSpell.enabled": true
   },
 
-  "[typescriptreact]": {
-    "js/ts.format.semicolons": "insert",
-    "cSpell.enabled": true
-  },
+  // "[typescriptreact]": {
+  //   "js/ts.format.semicolons": "insert",
+  //   "cSpell.enabled": true
+  // },
 
   "[plaintext]": {
     "cSpell.enabled": true

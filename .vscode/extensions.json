@@ -13,7 +13,6 @@
     // Code Quality & Linting
     // ──────────────────────────────────────────────────────────────────────────
     "sonarsource.sonarlint-vscode",
-    "github.copilot",
     "github.copilot-chat",
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -21,6 +20,7 @@
     // ──────────────────────────────────────────────────────────────────────────
     "esbenp.prettier-vscode",
     "editorconfig.editorconfig",
+    "dbaeumer.vscode-eslint",
 
     // ──────────────────────────────────────────────────────────────────────────
     // Containerization & Infrastructure
@@ -35,11 +35,6 @@
     // Database & Data Tools (PostgreSQL)
     // ──────────────────────────────────────────────────────────────────────────
     "ckolkman.vscode-postgres",
-    "mtxr.sqltools",
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // REST API Testing & Documentation
-    // ──────────────────────────────────────────────────────────────────────────
     "humao.rest-client",
     "42crunch.vscode-openapi",
 
@@ -48,6 +43,7 @@
     // ──────────────────────────────────────────────────────────────────────────
     "eamodio.gitlens",
     "github.remotehub",
+    "github.vscode-github-actions",
 
     // ──────────────────────────────────────────────────────────────────────────
     // Markdown & Documentation
@@ -62,12 +58,10 @@
     // ──────────────────────────────────────────────────────────────────────────
     "alefragnani.bookmarks",
     "alefragnani.project-manager",
-    "gruntfuggly.todo-tree",
 
     // ──────────────────────────────────────────────────────────────────────────
     // Themes & UI
     // ──────────────────────────────────────────────────────────────────────────
-    "dracula-theme.theme-dracula",
     "pkief.material-icon-theme",
     "miguelsolorio.fluent-icons",
 
@@ -83,9 +77,11 @@
     // ──────────────────────────────────────────────────────────────────────────
     "redhat.vscode-yaml",
     "redhat.vscode-xml",
-    "ms-dotnettools.vscode-dotnet-modernize",
     "anthropic.claude-code",
-    "openai.chatgpt",
-    "github.vscode-github-actions"
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // AI
+    // ──────────────────────────────────────────────────────────────────────────
+    "openai.chatgpt"
   ]
 }

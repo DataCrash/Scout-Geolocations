@@ -12,6 +12,9 @@ public static class DevDataSeeder
     public static readonly Guid SeedChallengeId =
         Guid.Parse("00000000-0000-0000-0000-000000000010");
 
+    public static readonly Guid SeedGeocacheId =
+        Guid.Parse("00000000-0000-0000-0000-000000000101");
+
     public const string SeedQrCode = "QR-DEMO-001";
 
     public static async Task EnsureChallengeSeedAsync(
@@ -27,6 +30,7 @@ public static class DevDataSeeder
             {
                 Id = SeedChallengeId,
                 EventId = SeedEventId,
+                GeocacheId = SeedGeocacheId,
                 Title = "Desafio E2E Seed - QR + Geo",
                 Description = "Desafio seed para validacao E2E integrada.",
                 Type = ChallengeType.QRCodeAndGeolocation,
@@ -47,6 +51,7 @@ public static class DevDataSeeder
 
         // Keep seed deterministic even if previous manual edits changed it.
         challenge.EventId = SeedEventId;
+        challenge.GeocacheId = SeedGeocacheId;
         challenge.Title = "Desafio E2E Seed - QR + Geo";
         challenge.Description = "Desafio seed para validacao E2E integrada.";
         challenge.Type = ChallengeType.QRCodeAndGeolocation;

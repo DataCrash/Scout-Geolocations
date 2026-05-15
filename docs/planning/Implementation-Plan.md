@@ -52,7 +52,48 @@
       (CRUD de desafios com role ChefesEscoteiro e bloqueio de role sem privilégio).
 - [x] Hardening dos specs E2E reais concluído com preflights padronizados,
       mensagens de skip/healthcheck consistentes e tipos compartilhados em helper comum.
+- [x] Falha histórica da PR #20 no CI diagnosticada (helper compartilhado ausente no run) e
+      resolvida no fluxo seguinte com PR #21 e execução CI verde.
 - [ ] Fluxos ponta a ponta completos com autenticação real e backend real ainda pendentes.
+
+### Plano de fechamento do M1 (M1-Closing)
+
+**Objetivo:** converter o status funcional atual em aceite formal do MVP Base.
+
+**Janela sugerida:** 1 sprint curta (3-5 dias úteis).
+
+#### Critérios de saída do M1
+
+- [ ] Evento seed oficial disponível com pelo menos 1 roteiro e 5 caches para validação.
+- [ ] Fluxo real de login do Monitor via Google @escoteiros.org.br validado ponta a ponta.
+- [ ] Fluxo real de entrada por QR de Patrulha validado para convidado e conta @escoteiros.org.br.
+- [ ] Check-in real por QR validado em cenário positivo e negativo com score consistente.
+- [ ] Painel admin validado com cobertura de CRUD para roteiros, caches, desafios, equipes e Chefes.
+- [ ] Logs estruturados e trilha de auditoria mínimos documentados e verificáveis.
+
+#### Pacotes de entrega (ordem recomendada)
+
+1. **Dados e seed de aceite**
+   - Consolidar seed determinístico de evento completo para testes de aceite (roteiro + 5 caches).
+   - Publicar contrato do seed de aceite (IDs fixos e expectativas de pontuação).
+2. **Autenticação real de produção piloto**
+   - Validar login Google real para Monitor e sessão autenticada no frontend.
+   - Registrar configuração mínima de ambiente para execução controlada do piloto.
+3. **Admin coverage de MVP**
+   - Completar cenários E2E/admin para entidades fora de Challenge API quando aplicável.
+   - Garantir matriz de permissão por role em operações críticas.
+4. **Observabilidade e auditoria**
+   - Definir checklist de logs obrigatórios por fluxo crítico (auth, patrulha, check-in, admin).
+   - Evidenciar trilha de auditoria para ações administrativas e validações de desafio.
+5. **Gate de aceite e encerramento de fase**
+   - Rodar suíte E2E de aceite do M1 com evidência de resultado.
+   - Emitir decisão formal de encerramento do M1 no plano e iniciar M2.
+
+#### Riscos atuais do M1
+
+- Dependência de configuração externa para autenticação real Google em ambiente de teste.
+- Lacunas potenciais de cobertura admin fora da trilha de desafios.
+- Divergência entre sucesso técnico (E2E parcial) e aceite formal do MVP (critérios completos).
 
 ---
 

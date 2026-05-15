@@ -9,7 +9,8 @@ type GuestAuthResponse = {
 
 const runRealBackend = process.env.RUN_REAL_BACKEND_E2E === "1";
 const identityApiUrl = process.env.IDENTITY_API_URL ?? "http://localhost:5001";
-const challengeApiUrl = process.env.CHALLENGE_API_URL ?? "http://localhost:5004";
+const challengeApiUrl =
+  process.env.CHALLENGE_API_URL ?? "http://localhost:5004";
 const challengeId =
   process.env.REAL_E2E_CHALLENGE_ID ?? "00000000-0000-0000-0000-000000000010";
 const patrulhaId =
@@ -68,7 +69,10 @@ test.describe("frontend MVP com backend real", () => {
     expect(me.role).toBe("Convidado");
   });
 
-  test("executa tentativa de check-in real sem mocks", async ({ page, context }) => {
+  test("executa tentativa de check-in real sem mocks", async ({
+    page,
+    context,
+  }) => {
     await context.grantPermissions(["geolocation"], {
       origin: "http://127.0.0.1:4173",
     });

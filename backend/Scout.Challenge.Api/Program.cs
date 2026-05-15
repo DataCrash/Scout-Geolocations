@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scout.Challenge.Api.Endpoints;
+using Scout.Challenge.Api.Hubs;
 using Scout.Challenge.Api.Infrastructure;
 using Scout.Challenge.Api.Services;
 
@@ -40,6 +41,7 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssemblyContaining<Program>());
 
 builder.Services.AddScoped<ChallengeService>();
+builder.Services.AddSignalR();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -76,6 +78,7 @@ app.UseAuthorization();
 
 app.MapChallengeEndpoints();
 app.MapAdminChallengeEndpoints();
+app.MapHub<LeaderboardHub>("/hubs/leaderboard");
 app.MapHealthChecks("/health");
 
 app.Run();

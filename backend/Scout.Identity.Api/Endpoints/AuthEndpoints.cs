@@ -17,11 +17,11 @@ public static class AuthEndpoints
         // POST /auth/google — troca ID token do Google por JWT da plataforma
         group.MapPost("/google", async (
             GoogleLoginRequest req,
-            GoogleAuthService  googleAuth,
-            JwtService         jwt,
-            IdentityDbContext  db,
-            IConfiguration     config,
-            CancellationToken  ct) =>
+            GoogleAuthService googleAuth,
+            JwtService jwt,
+            IdentityDbContext db,
+            IConfiguration config,
+            CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(req.IdToken))
                 return Results.BadRequest("idToken é obrigatório");
@@ -32,7 +32,7 @@ public static class AuthEndpoints
 
             if (!payload.Email.EndsWith("@escoteiros.org.br", StringComparison.OrdinalIgnoreCase))
                 return Results.Problem(
-                    detail:     "Apenas contas @escoteiros.org.br são permitidas",
+                    detail: "Apenas contas @escoteiros.org.br são permitidas",
                     statusCode: StatusCodes.Status403Forbidden);
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == payload.Subject, ct);
@@ -46,11 +46,11 @@ public static class AuthEndpoints
 
                 user = new User
                 {
-                    Id        = Guid.NewGuid(),
+                    Id = Guid.NewGuid(),
                     GoogleSub = payload.Subject,
-                    Email     = payload.Email,
-                    Name      = payload.Name ?? payload.Email,
-                    Role      = role,
+                    Email = payload.Email,
+                    Name = payload.Name ?? payload.Email,
+                    Role = role,
                     CreatedAt = DateTime.UtcNow,
                 };
 
@@ -64,7 +64,7 @@ public static class AuthEndpoints
         // POST /auth/guest — cria sessão de convidado (sem Google)
         group.MapPost("/guest", async (
             GuestLoginRequest req,
-            JwtService        jwt,
+            JwtService jwt,
             IdentityDbContext db,
             CancellationToken ct) =>
         {
@@ -73,9 +73,9 @@ public static class AuthEndpoints
 
             var user = new User
             {
-                Id        = Guid.NewGuid(),
-                Name      = req.Name.Trim(),
-                Role      = UserRole.Convidado,
+                Id = Guid.NewGuid(),
+                Name = req.Name.Trim(),
+                Role = UserRole.Convidado,
                 CreatedAt = DateTime.UtcNow,
             };
 
@@ -87,7 +87,7 @@ public static class AuthEndpoints
 
         // GET /auth/me — retorna dados do usuário autenticado
         group.MapGet("/me", async (
-            ClaimsPrincipal   principal,
+            ClaimsPrincipal principal,
             IdentityDbContext db,
             CancellationToken ct) =>
         {
@@ -116,10 +116,10 @@ public static class AuthEndpoints
             string code,
             string? state,
             GoogleOAuthService oauthService,
-            JwtService         jwt,
-            IdentityDbContext  db,
-            IConfiguration     config,
-            CancellationToken  ct) =>
+            JwtService jwt,
+            IdentityDbContext db,
+            IConfiguration config,
+            CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(code))
                 return Results.BadRequest("code é obrigatório");
@@ -130,7 +130,7 @@ public static class AuthEndpoints
 
             if (!payload.Email.EndsWith("@escoteiros.org.br", StringComparison.OrdinalIgnoreCase))
                 return Results.Problem(
-                    detail:     "Apenas contas @escoteiros.org.br são permitidas",
+                    detail: "Apenas contas @escoteiros.org.br são permitidas",
                     statusCode: StatusCodes.Status403Forbidden);
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == payload.Subject, ct);
@@ -144,11 +144,11 @@ public static class AuthEndpoints
 
                 user = new User
                 {
-                    Id        = Guid.NewGuid(),
+                    Id = Guid.NewGuid(),
                     GoogleSub = payload.Subject,
-                    Email     = payload.Email,
-                    Name      = payload.Name ?? payload.Email,
-                    Role      = role,
+                    Email = payload.Email,
+                    Name = payload.Name ?? payload.Email,
+                    Role = role,
                     CreatedAt = DateTime.UtcNow,
                 };
 

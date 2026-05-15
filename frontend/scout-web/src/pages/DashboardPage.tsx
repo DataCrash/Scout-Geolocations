@@ -8,10 +8,10 @@ import {
 } from "@/services/adminChallengesApi";
 import { validateChallenge } from "@/services/challengeApi";
 import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
-import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import L from "leaflet";
-import { Compass, QrCode, ShieldCheck, Trophy, LogOut } from "lucide-react";
+import { Compass, LogOut, QrCode, ShieldCheck, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -30,7 +30,9 @@ export default function DashboardPage() {
   const [patrulhaId, setPatrulhaId] = useState(
     "11111111-1111-1111-1111-111111111111",
   );
-  const [userId, setUserId] = useState(user?.id || "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+  const [userId, setUserId] = useState(
+    user?.id || "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  );
   const [qrCode, setQrCode] = useState("");
   const [latitude, setLatitude] = useState<string>("");
   const [longitude, setLongitude] = useState<string>("");
@@ -48,7 +50,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   useEffect(() => {

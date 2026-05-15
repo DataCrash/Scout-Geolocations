@@ -53,6 +53,7 @@ GOOGLE_REDIRECT_URI=http://localhost:5001/auth/google/callback
 #### Production
 
 Use environment variables or `.env` file on your deployment:
+
 ```bash
 GOOGLE_CLIENT_ID=your-production-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-production-client-secret
@@ -66,6 +67,7 @@ INITIAL_ADMIN_EMAIL=chefe@escoteiros.org.br
 ### Redirect Flow
 
 #### 1. Start OAuth Flow
+
 ```http
 POST /auth/google/authorize
 
@@ -79,6 +81,7 @@ Response:
 **Frontend action:** Redirect user to `authorizationUrl`
 
 #### 2. OAuth Callback (Automatic Redirect)
+
 ```http
 GET /auth/google/callback?code=AUTHORIZATION_CODE&state=STATE
 
@@ -86,7 +89,8 @@ Response (Redirect):
 Location: http://localhost:5173/auth/callback?token=JWT_TOKEN&userId=UUID&name=USER_NAME&role=ROLE
 ```
 
-**Frontend action:** 
+**Frontend action:**
+
 1. Store JWT token
 2. Validate email domain
 3. Update user state
@@ -112,6 +116,7 @@ Response:
 ```
 
 ### Verify Authentication
+
 ```http
 GET /auth/me
 Authorization: Bearer JWT_TOKEN
@@ -130,11 +135,13 @@ Response:
 ### Option 1: Google Sign-In JavaScript Library (Recommended)
 
 Install Google sign-in library:
+
 ```bash
 npm install @react-oauth/google
 ```
 
 Example React component:
+
 ```typescript
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -165,7 +172,7 @@ export function LoginPage() {
 
 ```typescript
 async function initiateGoogleOAuth() {
-  const response = await fetch('/auth/google/authorize', { method: 'POST' });
+  const response = await fetch("/auth/google/authorize", { method: "POST" });
   const { authorizationUrl } = await response.json();
   window.location.href = authorizationUrl;
 }
@@ -173,17 +180,17 @@ async function initiateGoogleOAuth() {
 // In your callback page (/auth/callback):
 function OAuthCallback() {
   const queryParams = new URLSearchParams(window.location.search);
-  const token = queryParams.get('token');
-  const userId = queryParams.get('userId');
-  const role = queryParams.get('role');
+  const token = queryParams.get("token");
+  const userId = queryParams.get("userId");
+  const role = queryParams.get("role");
 
   if (token) {
-    localStorage.setItem('token', token);
-    localStorage.setItem('userId', userId);
-    localStorage.setItem('userRole', role);
-    window.location.href = '/dashboard';
+    localStorage.setItem("token", token);
+    localStorage.setItem("userId", userId);
+    localStorage.setItem("userRole", role);
+    window.location.href = "/dashboard";
   } else {
-    window.location.href = '/login?error=auth_failed';
+    window.location.href = "/login?error=auth_failed";
   }
 }
 ```
@@ -192,27 +199,31 @@ function OAuthCallback() {
 
 When a user authenticates via Google, they are automatically assigned a role:
 
-| Role | Criteria | Permissions |
-|---|---|---|
-| `ChefesEscoteiro` | Email matches `INITIAL_ADMIN_EMAIL` | Full admin access: CRUD all entities, manage users, manage admins |
-| `Integrante` | Any other `@escoteiros.org.br` email | Create Patrulha, join events, complete challenges |
-| `Convidado` | Via `/auth/guest` (no Google) | Temporary session, limited features |
+| Role              | Criteria                             | Permissions                                                       |
+| ----------------- | ------------------------------------ | ----------------------------------------------------------------- |
+| `ChefesEscoteiro` | Email matches `INITIAL_ADMIN_EMAIL`  | Full admin access: CRUD all entities, manage users, manage admins |
+| `Integrante`      | Any other `@escoteiros.org.br` email | Create Patrulha, join events, complete challenges                 |
+| `Convidado`       | Via `/auth/guest` (no Google)        | Temporary session, limited features                               |
 
 ## Troubleshooting
 
 ### "Google:ClientId não configurado"
+
 - Verify `GOOGLE_CLIENT_ID` is set in environment variables
 - Check Docker Compose passes `Google__ClientId` to service
 
 ### "Apenas contas @escoteiros.org.br são permitidas"
+
 - Only `@escoteiros.org.br` email addresses are allowed
 - Contact organizer to request account creation
 
 ### "Redirect URI mismatch"
+
 - Verify `GOOGLE_REDIRECT_URI` matches exactly what's configured in Google Cloud Console
 - Common issue: trailing slashes or `http` vs `https`
 
 ### JWT Token not working
+
 - Verify `JWT_KEY` environment variable is set (min 32 bytes)
 - Check token expiration (default: 8 hours)
 - Validate `Authorization: Bearer TOKEN` header format

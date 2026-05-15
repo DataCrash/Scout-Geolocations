@@ -7,21 +7,21 @@ public record OAuthAuthorizeResponse(string AuthorizationUrl, string State);
 public record UserResponse(Guid Id, string Name, string? Email, string Role);
 
 public record PatrulhaResponse(
-    Guid     Id,
-    string   Name,
-    Guid     MonitorId,
-    Guid?    SubmonitorId,
+    Guid Id,
+    string Name,
+    Guid MonitorId,
+    Guid? SubmonitorId,
     DateTime CreatedAt);
 
 public record InviteResponse(
-    Guid     InviteId,
-    string   Token,
-    string   JoinUrl,
-    string   QrCodeBase64,
+    Guid InviteId,
+    string Token,
+    string JoinUrl,
+    string QrCodeBase64,
     DateTime ExpiresAt);
 
 public record PatrulhaMemberResponse(
-    Guid     UserId,
-    string   Name,
-    string   Role,
+    Guid UserId,
+    string Name,
+    string Role,
     DateTime JoinedAt);

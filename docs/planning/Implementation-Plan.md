@@ -40,6 +40,8 @@
 - [x] Frontend MVP com mapa, check-in QR, leaderboard e painel Admin CRUD.
 - [x] Base de E2E Playwright criada e expandida para fluxos mockados de check-in e admin.
 - [x] Pipeline `CI (develop)` atualizado para executar E2E do frontend.
+- [x] Spec E2E integrado opt-in adicionado para autenticação real
+  (`/auth/guest` + `/auth/me`) e tentativa de check-in sem mocks.
 - [ ] Fluxos ponta a ponta completos com autenticação real e backend real ainda pendentes.
 
 ---

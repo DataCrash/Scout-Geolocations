@@ -45,9 +45,11 @@ builder.Services.AddMediatR(cfg =>
 
 // ── Serviços de domínio ───────────────────────────────────────────────────────
 builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<GoogleOAuthService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PatrulhaService>();
 builder.Services.AddSingleton<QrCodeService>();
+builder.Services.AddHttpClient<GoogleOAuthService>();
 
 // ── OpenAPI / Documentação ────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();

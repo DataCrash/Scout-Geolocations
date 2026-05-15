@@ -2,6 +2,8 @@ namespace Scout.Identity.Api.Contracts;
 
 public record AuthResponse(string Token, Guid UserId, string Name, string Role);
 
+public record OAuthAuthorizeResponse(string AuthorizationUrl, string State);
+
 public record UserResponse(Guid Id, string Name, string? Email, string Role);
 
 public record PatrulhaResponse(

@@ -17,10 +17,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            frontend/scout-web/package-lock.json
+            tests/e2e/package-lock.json
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend/scout-web
+
+      - name: Install E2E dependencies
+        run: npm ci
+        working-directory: tests/e2e
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: tests/e2e
 
       - name: Restore solution
         run: dotnet restore Scout-Geolocations.sln
@@ -42,3 +63,7 @@ jobs:
             echo "Running tests for $project"
             dotnet test "$project" --configuration Release --no-build --verbosity normal
           done <<< "$test_projects"
+
+      - name: Run frontend E2E
+        run: npm test
+        working-directory: tests/e2e

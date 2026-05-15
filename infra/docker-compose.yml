@@ -17,6 +17,24 @@ services:
       retries: 5
     restart: unless-stopped
 
+  challenge-db:
+    image: postgres:16-alpine
+    container_name: scout-challenge-postgres
+    environment:
+      POSTGRES_DB: challenge_db
+      POSTGRES_USER: scout
+      POSTGRES_PASSWORD: scout_dev_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - challenge_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scout -d challenge_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: scout-redis
@@ -128,7 +146,31 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  challenge-api:
+    build:
+      context: ../backend/Scout.Challenge.Api
+      dockerfile: Dockerfile
+    container_name: scout-challenge-api
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=challenge-db;Port=5432;Database=challenge_db;Username=scout;Password=scout_dev_pass
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=scout-geolocations
+      - Jwt__Audience=scout-geolocations-client
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=scout
+      - RabbitMq__Password=scout_dev_pass
+    depends_on:
+      challenge-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  challenge_postgres_data:
   redis_data:
   rabbitmq_data:

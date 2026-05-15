@@ -1,19 +1,15 @@
 import { expect, test } from "@playwright/test";
-
-type AuthResponse = {
-  token: string;
-  userId: string;
-  name: string;
-  role: string;
-};
-
-type PatrulhaResponse = {
-  id: string;
-  name: string;
-  monitorId: string;
-  submonitorId?: string | null;
-  createdAt: string;
-};
+import {
+  authHeader,
+  createPatrulha,
+  guestLogin,
+  identityApiUrl,
+  probeIdentityGuestSession,
+  runRealBackend,
+  runRealBackendSkipMessage,
+  serviceUnavailableMessage,
+  type PatrulhaResponse,
+} from "./support/real-backend.helpers";
 
 type InviteResponse = {
   inviteId: string;
@@ -30,61 +26,23 @@ type PatrulhaMemberResponse = {
   joinedAt: string;
 };
 
-const runRealBackend = process.env.RUN_REAL_BACKEND_E2E === "1";
-const identityApiUrl = process.env.IDENTITY_API_URL ?? "http://localhost:5001";
-
-function authHeader(token: string) {
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
-
-async function guestLogin(
-  request: Parameters<typeof test>[0]["request"],
-  namePrefix: string,
-): Promise<AuthResponse> {
-  const response = await request.post(`${identityApiUrl}/auth/guest`, {
-    data: {
-      name: `${namePrefix}-${Date.now()}`,
-    },
-  });
-
-  expect(response.ok()).toBeTruthy();
-  return (await response.json()) as AuthResponse;
-}
-
 test.describe("identity real: auth + patrulha + invite token", () => {
-  test.skip(
-    !runRealBackend,
-    "Defina RUN_REAL_BACKEND_E2E=1 para executar specs integrados.",
-  );
+  test.skip(!runRealBackend, runRealBackendSkipMessage);
 
   test.beforeAll(async ({ request }) => {
     const identityHealth = await request.get(`${identityApiUrl}/health`);
     test.skip(
       !identityHealth.ok(),
-      `Identity API indisponível em ${identityApiUrl}.`,
+      serviceUnavailableMessage("Identity API", identityApiUrl),
     );
+
+    const sessionProbe = await probeIdentityGuestSession(request);
+    test.skip(!sessionProbe.ok, sessionProbe.reason ?? "Preflight falhou.");
   });
 
   test("cria patrulha com monitor autenticado", async ({ request }) => {
     const monitor = await guestLogin(request, "E2E-Monitor");
-
-    const createPatrulhaResponse = await request.post(
-      `${identityApiUrl}/patrulha/`,
-      {
-        headers: {
-          ...authHeader(monitor.token),
-        },
-        data: {
-          name: `Patrulha E2E ${Date.now()}`,
-        },
-      },
-    );
-
-    expect(createPatrulhaResponse.status()).toBe(201);
-
-    const patrulha = (await createPatrulhaResponse.json()) as PatrulhaResponse;
+    const patrulha = await createPatrulha(request, monitor.token);
     expect(patrulha.monitorId).toBe(monitor.userId);
 
     const meResponse = await request.get(`${identityApiUrl}/auth/me`, {
@@ -109,22 +67,11 @@ test.describe("identity real: auth + patrulha + invite token", () => {
   }) => {
     const monitor = await guestLogin(request, "E2E-Monitor");
     const integrante = await guestLogin(request, "E2E-Integrante");
-
-    const createPatrulhaResponse = await request.post(
-      `${identityApiUrl}/patrulha/`,
-      {
-        headers: {
-          ...authHeader(monitor.token),
-        },
-        data: {
-          name: `Patrulha Fluxo QR ${Date.now()}`,
-        },
-      },
+    const patrulha = await createPatrulha(
+      request,
+      monitor.token,
+      "Patrulha Fluxo QR",
     );
-
-    expect(createPatrulhaResponse.status()).toBe(201);
-
-    const patrulha = (await createPatrulhaResponse.json()) as PatrulhaResponse;
 
     const inviteResponse = await request.get(
       `${identityApiUrl}/patrulha/${patrulha.id}/invite`,

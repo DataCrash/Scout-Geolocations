@@ -9,7 +9,7 @@ import {
   runRealBackendSkipMessage,
   seedEventId,
   serviceUnavailableMessage,
-} from "./support/real-backend.helpers";
+} from "./support/real-backend.helpers.js";
 
 test.describe("challenge admin real: CRUD com autorizacao", () => {
   let adminToken: string;

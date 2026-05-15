@@ -9,7 +9,7 @@ import {
   runRealBackendSkipMessage,
   serviceUnavailableMessage,
   type PatrulhaResponse,
-} from "./support/real-backend.helpers";
+} from "./support/real-backend.helpers.js";
 
 type InviteResponse = {
   inviteId: string;

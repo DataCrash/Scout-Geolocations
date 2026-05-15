@@ -82,6 +82,23 @@ Variáveis opcionais:
 - `REAL_E2E_JWT_ISSUER` (default: `scout-identity`)
 - `REAL_E2E_JWT_AUDIENCE` (default: `scout-apps`)
 
+Contrato do seed oficial M1 (Development):
+
+- `eventId`: `00000000-0000-0000-0000-000000000001`
+- `challengeId`: `00000000-0000-0000-0000-000000000010`
+- `challengeQr`: `QR-DEMO-001`
+- `geocacheIds`:
+  - `00000000-0000-0000-0000-000000000101`
+  - `00000000-0000-0000-0000-000000000102`
+  - `00000000-0000-0000-0000-000000000103`
+  - `00000000-0000-0000-0000-000000000104`
+  - `00000000-0000-0000-0000-000000000105`
+
+Expectativa mínima do seed para aceite M1:
+
+- 5 geocaches ativos para o `eventId` oficial.
+- 1 desafio ativo QR+Geo associado ao primeiro geocache (`...0101`) com score base de 25 pontos.
+
 Se o spec `admin-challenge-real.spec.ts` acusar rejeição de JWT (401), alinhe as variáveis ao ambiente:
 
 - Execução local em Development (Challenge API): issuer `scout-identity`, audience `scout-apps`.

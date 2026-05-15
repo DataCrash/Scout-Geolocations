@@ -80,7 +80,11 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CacheDbContext>();
+    var redis = scope.ServiceProvider.GetRequiredService<IConnectionMultiplexer>()
+        .GetDatabase();
+
     await db.Database.MigrateAsync();
+    await DevDataSeeder.EnsureOfficialEventSeedAsync(db, redis);
 
     app.UseSwagger();
     app.UseSwaggerUI();

@@ -68,6 +68,7 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ChallengeDbContext>();
     await db.Database.MigrateAsync();
+    await DevDataSeeder.EnsureChallengeSeedAsync(db);
 }
 
 app.UseSwagger();

@@ -15,7 +15,7 @@ import {
   seedChallengeQrCode,
   seedEventId,
   serviceUnavailableMessage,
-} from "./support/real-backend.helpers";
+} from "./support/real-backend.helpers.js";
 
 const challengeId = seedChallengeId;
 const qrCode = seedChallengeQrCode;
@@ -121,7 +121,11 @@ test.describe("frontend MVP com backend real", () => {
     context,
     request,
   }) => {
-    const seedAvailable = await hasSeedChallenge(request, auth.token);
+    const seedAvailable = await hasSeedChallenge(
+      request,
+      auth.token,
+      challengeId,
+    );
     test.skip(
       !seedAvailable,
       "Challenge seed nao encontrado. Execute Challenge API em Development para carregar DevDataSeeder.",
@@ -197,7 +201,11 @@ test.describe("frontend MVP com backend real", () => {
   test("retorna tentativa falha com QR invalido e score permanece zero", async ({
     request,
   }) => {
-    const seedAvailable = await hasSeedChallenge(request, auth.token);
+    const seedAvailable = await hasSeedChallenge(
+      request,
+      auth.token,
+      challengeId,
+    );
     test.skip(
       !seedAvailable,
       "Challenge seed nao encontrado. Execute Challenge API em Development para carregar DevDataSeeder.",

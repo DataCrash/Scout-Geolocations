@@ -34,6 +34,14 @@
 - Frontend: mapa, tela de caça, check-in, leaderboard e painel admin.
 - Infra: Docker Compose com RabbitMQ, Redis e SignalR.
 
+### Status incremental atual (May 15, 2026)
+
+- [x] Challenge Service implementado com validação por QR/localização e leaderboard realtime via SignalR.
+- [x] Frontend MVP com mapa, check-in QR, leaderboard e painel Admin CRUD.
+- [x] Base de E2E Playwright criada e expandida para fluxos mockados de check-in e admin.
+- [x] Pipeline `CI (develop)` atualizado para executar E2E do frontend.
+- [ ] Fluxos ponta a ponta completos com autenticação real e backend real ainda pendentes.
+
 ---
 
 ## Fase 2 — M2: Visão Computacional

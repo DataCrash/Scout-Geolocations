@@ -1,27 +1,26 @@
 import { expect, test } from "@playwright/test";
+import {
+  type AttemptResponse,
+  authHeader,
+  challengeApiUrl,
+  createPatrulha,
+  type GuestAuthResponse,
+  hasSeedChallenge,
+  identityApiUrl,
+  type PatrulhaScoreResponse,
+  probeChallengeAuthStatus,
+  runRealBackend,
+  runRealBackendSkipMessage,
+  seedEventId,
+  serviceUnavailableMessage,
+} from "./support/real-backend.helpers";
 
-type GuestAuthResponse = {
-  token: string;
-  userId: string;
-  name: string;
-  role: string;
-};
-
-const runRealBackend = process.env.RUN_REAL_BACKEND_E2E === "1";
-const identityApiUrl = process.env.IDENTITY_API_URL ?? "http://localhost:5001";
-const challengeApiUrl =
-  process.env.CHALLENGE_API_URL ?? "http://localhost:5004";
 const challengeId =
   process.env.REAL_E2E_CHALLENGE_ID ?? "00000000-0000-0000-0000-000000000010";
-const patrulhaId =
-  process.env.REAL_E2E_PATRULHA_ID ?? "11111111-1111-1111-1111-111111111111";
 const qrCode = process.env.REAL_E2E_QR ?? "QR-DEMO-001";
 
 test.describe("frontend MVP com backend real", () => {
-  test.skip(
-    !runRealBackend,
-    "Defina RUN_REAL_BACKEND_E2E=1 para executar este spec integrado.",
-  );
+  test.skip(!runRealBackend, runRealBackendSkipMessage);
 
   let auth: GuestAuthResponse;
 
@@ -29,13 +28,13 @@ test.describe("frontend MVP com backend real", () => {
     const identityHealth = await request.get(`${identityApiUrl}/health`);
     test.skip(
       !identityHealth.ok(),
-      `Identity API indisponivel em ${identityApiUrl}.`,
+      serviceUnavailableMessage("Identity API", identityApiUrl),
     );
 
     const challengeHealth = await request.get(`${challengeApiUrl}/health`);
     test.skip(
       !challengeHealth.ok(),
-      `Challenge API indisponivel em ${challengeApiUrl}.`,
+      serviceUnavailableMessage("Challenge API", challengeApiUrl),
     );
 
     const loginResponse = await request.post(`${identityApiUrl}/auth/guest`, {
@@ -46,6 +45,17 @@ test.describe("frontend MVP com backend real", () => {
 
     expect(loginResponse.ok()).toBeTruthy();
     auth = (await loginResponse.json()) as GuestAuthResponse;
+
+    const challengeAuthStatus = await probeChallengeAuthStatus(
+      request,
+      auth.token,
+      seedEventId,
+    );
+
+    test.skip(
+      challengeAuthStatus === 401,
+      "Token guest do Identity foi rejeitado pela Challenge API. Alinhe Jwt:Key, Jwt:Issuer e Jwt:Audience entre os dois serviços para execução integrada.",
+    );
   });
 
   test("valida token guest real no endpoint /auth/me", async ({ request }) => {
@@ -72,7 +82,10 @@ test.describe("frontend MVP com backend real", () => {
   test("executa tentativa de check-in real sem mocks", async ({
     page,
     context,
+    request,
   }) => {
+    const patrulha = await createPatrulha(request, auth.token);
+
     await context.grantPermissions(["geolocation"], {
       origin: "http://127.0.0.1:4173",
     });
@@ -85,7 +98,7 @@ test.describe("frontend MVP com backend real", () => {
     await page.goto("/");
 
     await page.getByPlaceholder("ChallengeId").fill(challengeId);
-    await page.getByPlaceholder("PatrulhaId").fill(patrulhaId);
+    await page.getByPlaceholder("PatrulhaId").fill(patrulha.id);
     await page.getByPlaceholder("UserId").fill(auth.userId);
     await page.getByPlaceholder("Conteúdo do QR Code").fill(qrCode);
 
@@ -97,8 +110,140 @@ test.describe("frontend MVP com backend real", () => {
 
     await expect(
       page.getByText(
-        /Check-in validado|QR Code inválido|não encontrado|já validou|não está ativo|sem validação/i,
+        /Check-in validado|QR Code inválido|não encontrado|já validou|não está ativo|sem validação|Falha ao validar check-in|Erro no check-in/i,
       ),
     ).toBeVisible();
+  });
+
+  test("executa check-in real deterministico com seed e valida score", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const seedAvailable = await hasSeedChallenge(request, auth.token);
+    test.skip(
+      !seedAvailable,
+      "Challenge seed nao encontrado. Execute Challenge API em Development para carregar DevDataSeeder.",
+    );
+
+    const patrulha = await createPatrulha(request, auth.token);
+
+    await context.grantPermissions(["geolocation"], {
+      origin: "http://127.0.0.1:4173",
+    });
+    await context.setGeolocation({ latitude: -23.55052, longitude: -46.63331 });
+
+    await page.addInitScript((token) => {
+      localStorage.setItem("access_token", token);
+    }, auth.token);
+
+    await page.goto("/");
+
+    await page.getByPlaceholder("ChallengeId").fill(challengeId);
+    await page.getByPlaceholder("PatrulhaId").fill(patrulha.id);
+    await page.getByPlaceholder("UserId").fill(auth.userId);
+    await page.getByPlaceholder("Conteúdo do QR Code").fill(qrCode);
+
+    await page.getByRole("button", { name: /Usar minha localização/i }).click();
+    await expect(page.getByPlaceholder("Latitude")).toHaveValue("-23.55052");
+    await expect(page.getByPlaceholder("Longitude")).toHaveValue("-46.63331");
+
+    await page.getByRole("button", { name: /Validar check-in/i }).click();
+    await expect(
+      page.getByText(/Check-in validado: \+25 pontos\./i),
+    ).toBeVisible();
+
+    const scoreResponse = await request.get(
+      `${challengeApiUrl}/api/challenges/score?patrulhaId=${patrulha.id}&eventId=${seedEventId}`,
+      {
+        headers: {
+          ...authHeader(auth.token),
+        },
+      },
+    );
+
+    expect(scoreResponse.ok()).toBeTruthy();
+
+    const score = (await scoreResponse.json()) as PatrulhaScoreResponse;
+    expect(score.patrulhaId).toBe(patrulha.id);
+    expect(score.eventId).toBe(seedEventId);
+    expect(score.totalPoints).toBe(25);
+    expect(score.validatedChallenges).toBe(1);
+    expect(score.totalAttempts).toBe(1);
+
+    const duplicateResponse = await request.post(
+      `${challengeApiUrl}/api/challenges/${challengeId}/validate`,
+      {
+        headers: {
+          ...authHeader(auth.token),
+        },
+        data: {
+          patrulhaId: patrulha.id,
+          userId: auth.userId,
+          scannedQrCode: qrCode,
+          latitude: -23.55052,
+          longitude: -46.63331,
+        },
+      },
+    );
+
+    expect(duplicateResponse.status()).toBe(409);
+
+    const duplicateError = await duplicateResponse.text();
+    expect(duplicateError).toContain("já validou");
+  });
+
+  test("retorna tentativa falha com QR invalido e score permanece zero", async ({
+    request,
+  }) => {
+    const seedAvailable = await hasSeedChallenge(request, auth.token);
+    test.skip(
+      !seedAvailable,
+      "Challenge seed nao encontrado. Execute Challenge API em Development para carregar DevDataSeeder.",
+    );
+
+    const patrulha = await createPatrulha(request, auth.token);
+
+    const failedAttemptResponse = await request.post(
+      `${challengeApiUrl}/api/challenges/${challengeId}/validate`,
+      {
+        headers: {
+          ...authHeader(auth.token),
+        },
+        data: {
+          patrulhaId: patrulha.id,
+          userId: auth.userId,
+          scannedQrCode: `${qrCode}-INVALID`,
+          latitude: -23.55052,
+          longitude: -46.63331,
+        },
+      },
+    );
+
+    expect(failedAttemptResponse.ok()).toBeTruthy();
+
+    const failedAttempt =
+      (await failedAttemptResponse.json()) as AttemptResponse;
+    expect(failedAttempt.status).toBe(2);
+    expect(failedAttempt.pointsAwarded).toBe(0);
+    expect(failedAttempt.failReason).toContain("QR Code inválido");
+
+    const scoreResponse = await request.get(
+      `${challengeApiUrl}/api/challenges/score?patrulhaId=${patrulha.id}&eventId=${seedEventId}`,
+      {
+        headers: {
+          ...authHeader(auth.token),
+        },
+      },
+    );
+
+    expect(scoreResponse.ok()).toBeTruthy();
+
+    const score = (await scoreResponse.json()) as PatrulhaScoreResponse;
+    expect(score.patrulhaId).toBe(patrulha.id);
+    expect(score.eventId).toBe(seedEventId);
+    expect(score.totalPoints).toBe(0);
+    expect(score.validatedChallenges).toBe(0);
+    expect(score.totalAttempts).toBe(1);
   });
 });

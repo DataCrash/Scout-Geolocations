@@ -1,9 +1,16 @@
 import { Button } from "@/components/ui/button";
+import {
+  createChallenge,
+  deleteChallenge,
+  listChallengesByEvent,
+  updateChallengeStatus,
+  type ChallengeItem,
+} from "@/services/adminChallengesApi";
 import { validateChallenge } from "@/services/challengeApi";
 import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import L from "leaflet";
-import { Compass, QrCode, Trophy } from "lucide-react";
+import { Compass, QrCode, ShieldCheck, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const center: [number, number] = [-23.5505, -46.6333];
@@ -26,6 +33,14 @@ function App() {
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkinMessage, setCheckinMessage] = useState<string>("");
+  const [adminChallenges, setAdminChallenges] = useState<ChallengeItem[]>([]);
+  const [adminTitle, setAdminTitle] = useState("Novo desafio QR");
+  const [adminDescription, setAdminDescription] = useState(
+    "Valide com QR no ponto A.",
+  );
+  const [adminQr, setAdminQr] = useState("QR-DEMO-001");
+  const [adminMessage, setAdminMessage] = useState<string>("");
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
 
   useEffect(() => {
     if (!mapRef.current) {
@@ -96,6 +111,73 @@ function App() {
     };
   }, [applyRealtimeUpdate, eventId]);
 
+  async function refreshAdminChallenges() {
+    setIsAdminLoading(true);
+    setAdminMessage("");
+
+    try {
+      const items = await listChallengesByEvent(eventId);
+      setAdminChallenges(items);
+    } catch (error) {
+      setAdminMessage(
+        error instanceof Error ? error.message : "Falha ao carregar desafios.",
+      );
+    } finally {
+      setIsAdminLoading(false);
+    }
+  }
+
+  async function handleCreateAdminChallenge() {
+    setIsAdminLoading(true);
+    setAdminMessage("");
+
+    try {
+      await createChallenge({
+        eventId,
+        title: adminTitle,
+        description: adminDescription,
+        type: 0,
+        qrCode: adminQr,
+        radiusMeters: 30,
+        basePoints: 10,
+        bonusPoints: 5,
+        bonusTimeSeconds: 0,
+      });
+
+      await refreshAdminChallenges();
+      setAdminMessage("Desafio criado com sucesso.");
+    } catch (error) {
+      setAdminMessage(
+        error instanceof Error ? error.message : "Falha ao criar desafio.",
+      );
+      setIsAdminLoading(false);
+    }
+  }
+
+  async function handleToggleStatus(challenge: ChallengeItem) {
+    const nextStatus = challenge.status === 1 ? 2 : 1;
+
+    try {
+      await updateChallengeStatus(challenge.id, nextStatus);
+      await refreshAdminChallenges();
+    } catch (error) {
+      setAdminMessage(
+        error instanceof Error ? error.message : "Falha ao atualizar status.",
+      );
+    }
+  }
+
+  async function handleDeleteChallenge(challengeId: string) {
+    try {
+      await deleteChallenge(challengeId);
+      await refreshAdminChallenges();
+    } catch (error) {
+      setAdminMessage(
+        error instanceof Error ? error.message : "Falha ao excluir desafio.",
+      );
+    }
+  }
+
   async function handleCaptureLocation() {
     if (!navigator.geolocation) {
       setCheckinMessage("Geolocalização não suportada no navegador.");
@@ -135,14 +217,18 @@ function App() {
       });
 
       if (result.status === 1) {
-        setCheckinMessage(`Check-in validado: +${result.pointsAwarded} pontos.`);
+        setCheckinMessage(
+          `Check-in validado: +${result.pointsAwarded} pontos.`,
+        );
       } else {
         setCheckinMessage(
           result.failReason ?? "Check-in processado, mas sem validação.",
         );
       }
     } catch (error) {
-      setCheckinMessage(error instanceof Error ? error.message : "Erro no check-in.");
+      setCheckinMessage(
+        error instanceof Error ? error.message : "Erro no check-in.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -166,7 +252,11 @@ function App() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button onClick={() => bumpPatrol("11111111-1111-1111-1111-111111111111", 15)}>
+            <Button
+              onClick={() =>
+                bumpPatrol("11111111-1111-1111-1111-111111111111", 15)
+              }
+            >
               Simular validação (+15)
             </Button>
             <Button variant="ghost">Evento: {eventId}</Button>
@@ -181,7 +271,8 @@ function App() {
             </span>
             {lastRealtimeAt && (
               <span className="text-xs text-muted-foreground">
-                Última atualização: {new Date(lastRealtimeAt).toLocaleTimeString("pt-BR")}
+                Última atualização:{" "}
+                {new Date(lastRealtimeAt).toLocaleTimeString("pt-BR")}
               </span>
             )}
           </div>
@@ -242,8 +333,14 @@ function App() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-3">
-              <Button variant="ghost" onClick={handleCaptureLocation} disabled={isLocating}>
-                {isLocating ? "Capturando localização..." : "Usar minha localização"}
+              <Button
+                variant="ghost"
+                onClick={handleCaptureLocation}
+                disabled={isLocating}
+              >
+                {isLocating
+                  ? "Capturando localização..."
+                  : "Usar minha localização"}
               </Button>
               <Button onClick={handleValidateCheckin} disabled={isSubmitting}>
                 {isSubmitting ? "Validando..." : "Validar check-in"}
@@ -251,7 +348,9 @@ function App() {
             </div>
 
             {checkinMessage && (
-              <p className="mt-3 text-sm text-muted-foreground">{checkinMessage}</p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {checkinMessage}
+              </p>
             )}
           </div>
         </section>
@@ -285,6 +384,86 @@ function App() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <ShieldCheck className="h-4 w-4" />
+              Admin · CRUD de desafios
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                value={adminTitle}
+                onChange={(event) => setAdminTitle(event.target.value)}
+                placeholder="Título"
+              />
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                value={adminDescription}
+                onChange={(event) => setAdminDescription(event.target.value)}
+                placeholder="Descrição"
+              />
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                value={adminQr}
+                onChange={(event) => setAdminQr(event.target.value)}
+                placeholder="QR esperado"
+              />
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                onClick={handleCreateAdminChallenge}
+                disabled={isAdminLoading}
+              >
+                Criar desafio
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={refreshAdminChallenges}
+                disabled={isAdminLoading}
+              >
+                {isAdminLoading ? "Atualizando..." : "Recarregar lista"}
+              </Button>
+            </div>
+
+            {adminMessage && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {adminMessage}
+              </p>
+            )}
+
+            <ul className="mt-4 space-y-2">
+              {adminChallenges.map((challenge) => (
+                <li
+                  key={challenge.id}
+                  className="rounded-xl border border-border bg-white p-3"
+                >
+                  <p className="text-sm font-semibold">{challenge.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Status: {challenge.status === 1 ? "Ativo" : "Inativo/Draft"}
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleToggleStatus(challenge)}
+                    >
+                      {challenge.status === 1 ? "Inativar" : "Ativar"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteChallenge(challenge.id)}
+                    >
+                      Excluir
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </aside>
       </div>
     </main>

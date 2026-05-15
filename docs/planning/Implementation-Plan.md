@@ -44,6 +44,14 @@
       (`/auth/guest` + `/auth/me`) e tentativa de check-in sem mocks.
 - [x] Spec E2E integrado opt-in adicionado para fluxo real de Patrulha
       (criar patrulha, gerar convite QR token, entrar na patrulha e definir submonitor).
+- [x] Spec E2E integrado opt-in adicionado para check-in real determinístico
+      com desafio seed, validação de score e bloqueio de duplicidade.
+- [x] Spec E2E integrado opt-in adicionado para caminho negativo real
+      (QR inválido com tentativa falha e score da Patrulha zerado).
+- [x] Spec E2E integrado opt-in adicionado para admin real da Challenge API
+      (CRUD de desafios com role ChefesEscoteiro e bloqueio de role sem privilégio).
+- [x] Hardening dos specs E2E reais concluído com preflights padronizados,
+      mensagens de skip/healthcheck consistentes e tipos compartilhados em helper comum.
 - [ ] Fluxos ponta a ponta completos com autenticação real e backend real ainda pendentes.
 
 ---

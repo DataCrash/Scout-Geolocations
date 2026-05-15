@@ -67,6 +67,16 @@ export const challengeApiUrl =
   process.env.CHALLENGE_API_URL ?? "http://localhost:5004";
 
 export const seedEventId = "00000000-0000-0000-0000-000000000001";
+export const seedChallengeId =
+  process.env.REAL_E2E_CHALLENGE_ID ?? "00000000-0000-0000-0000-000000000010";
+export const seedChallengeQrCode = process.env.REAL_E2E_QR ?? "QR-DEMO-001";
+export const seedGeocacheIds = [
+  "00000000-0000-0000-0000-000000000101",
+  "00000000-0000-0000-0000-000000000102",
+  "00000000-0000-0000-0000-000000000103",
+  "00000000-0000-0000-0000-000000000104",
+  "00000000-0000-0000-0000-000000000105",
+] as const;
 
 const defaultJwtKey =
   process.env.REAL_E2E_JWT_KEY ??

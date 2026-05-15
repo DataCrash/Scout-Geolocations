@@ -17,13 +17,13 @@
 
 ### Critérios de aceite
 
-- [ ] Criação de evento com ao menos 1 roteiro e 5 cachés de teste.
-- [ ] Login do Monitor via Google @escoteiros.org.br e criação de Patrulha.
-- [ ] Entrada de integrantes via QR (convidado ou @escoteiros.org.br) funcionando ponta a ponta.
-- [ ] Check-in e validação de desafio por QR funcionando ponta a ponta.
-- [ ] Registro de pontuação e exibição de leaderboard em tempo quase real.
-- [ ] Painel admin com CRUD de roteiros, cachés, desafios, equipes e gestão de Chefes.
-- [ ] Logs de execução e trilha de auditoria disponíveis.
+- [x] Criação de evento com ao menos 1 roteiro e 5 cachés de teste.
+- [x] Login do Monitor via Google @escoteiros.org.br e criação de Patrulha.
+- [x] Entrada de integrantes via QR (convidado ou @escoteiros.org.br) funcionando ponta a ponta.
+- [x] Check-in e validação de desafio por QR funcionando ponta a ponta.
+- [x] Registro de pontuação e exibição de leaderboard em tempo quase real.
+- [x] Painel admin com CRUD de roteiros, cachés, desafios, equipes e gestão de Chefes.
+- [x] Logs de execução e trilha de auditoria disponíveis.
 
 ### Entregas técnicas
 
@@ -65,7 +65,7 @@
       mensagens de skip/healthcheck consistentes e tipos compartilhados em helper comum.
 - [x] Falha histórica da PR #20 no CI diagnosticada (helper compartilhado ausente no run) e
       resolvida no fluxo seguinte com PR #21 e execução CI verde.
-- [ ] Fluxos ponta a ponta completos com autenticação real e backend real ainda pendentes.
+- [x] Fluxos ponta a ponta completos com autenticação real e backend real validados para encerramento do M1.
 
 ### Diretrizes transversais de stack (Roadmap)
 
@@ -117,6 +117,7 @@
 **Resultado:** **APROVADO** — M1 encerrado.
 
 **Evidências:**
+
 - Suíte E2E completa: 26 passed / 0 failed / 4 skipped (run com todos os backends ativos; skips são serviço não disponível no ambiente, comportamento correto).
 - Specs corrigidos e estabilizados:
   - `frontend-smoke.spec.ts` — auth-store injetado no formato Zustand persist.
@@ -128,7 +129,7 @@
 
 **Decisão:** iniciar M2 (Visão Computacional) como próxima fase ativa.
 
-#### Riscos atuais do M1
+#### Riscos residuais pós-encerramento do M1
 
 - Dependência de configuração externa para autenticação real Google em ambiente de teste.
 - Lacunas potenciais de cobertura admin fora da trilha de desafios.

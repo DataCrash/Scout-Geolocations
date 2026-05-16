@@ -121,14 +121,10 @@
 - Suíte E2E completa: 26 passed / 0 failed / 4 skipped
   (run com todos os backends ativos; skips são serviço não disponível
   no ambiente, comportamento correto).
-- Specs corrigidos e estabilizados:
-      - `frontend-smoke.spec.ts` — auth-store injetado no formato Zustand persist.
-      - `oauth2-google-real.spec.ts` — 11/11 passed
-            (scope via URL parsing, SecurityError resolvido,
-            asserts de redirect/logout robustecidos).
-      - `frontend-real-backend.spec.ts` — auth-store injetado corretamente
-            (substituição de `access_token` legada).
-      - `admin-roteiro-real.spec.ts` — 2/2 passed (CRUD em `/api/admin/roteiros`).
+- Specs corrigidos e estabilizados: - `frontend-smoke.spec.ts` — auth-store injetado no formato Zustand persist. - `oauth2-google-real.spec.ts` — 11/11 passed
+  (scope via URL parsing, SecurityError resolvido,
+  asserts de redirect/logout robustecidos). - `frontend-real-backend.spec.ts` — auth-store injetado corretamente
+  (substituição de `access_token` legada). - `admin-roteiro-real.spec.ts` — 2/2 passed (CRUD em `/api/admin/roteiros`).
 - 46 eventos AUDIT estruturados em Identity, Challenge e Cache APIs (ver `docs/operations/Observability-Audit.md`).
 - Todos os 6 critérios de saída do M1 marcados [x].
 

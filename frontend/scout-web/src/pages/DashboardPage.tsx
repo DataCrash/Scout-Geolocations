@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useNfc } from "@/hooks/useNfc";
 import {
   createChallenge,
   deleteChallenge,
@@ -95,6 +96,14 @@ export default function DashboardPage() {
   const [backendVisionResult, setBackendVisionResult] =
     useState<VisionAnalysisResponse | null>(null);
   const [isBackendVisionLoading, setIsBackendVisionLoading] = useState(false);
+  const {
+    isSupported: isNfcSupported,
+    isScanning: isNfcScanning,
+    lastPayload: nfcPayload,
+    error: nfcError,
+    startScan: startNfcScan,
+    stopScan: stopNfcScan,
+  } = useNfc();
 
   const handleLogout = () => {
     logout();
@@ -179,8 +188,18 @@ export default function DashboardPage() {
 
       stream.getTracks().forEach((track) => track.stop());
       cameraStreamRef.current = null;
+      stopNfcScan();
     };
-  }, []);
+  }, [stopNfcScan]);
+
+  useEffect(() => {
+    if (!nfcPayload) {
+      return;
+    }
+
+    setQrCode(nfcPayload);
+    setCheckinMessage(`Tag NFC lida com sucesso: ${nfcPayload}`);
+  }, [nfcPayload]);
 
   useEffect(() => {
     let active = true;
@@ -616,10 +635,28 @@ export default function DashboardPage() {
                   ? "Capturando localização..."
                   : "Usar minha localização"}
               </Button>
+              {isNfcSupported ? (
+                <Button
+                  variant="ghost"
+                  onClick={isNfcScanning ? stopNfcScan : startNfcScan}
+                >
+                  {isNfcScanning
+                    ? "Parar leitura NFC"
+                    : "Ler tag NFC (fallback do QR)"}
+                </Button>
+              ) : (
+                <span className="inline-flex items-center rounded-xl border border-border/70 bg-white px-3 py-2 text-xs text-muted-foreground">
+                  WebNFC indisponível neste dispositivo. Use QR manual.
+                </span>
+              )}
               <Button onClick={handleValidateCheckin} disabled={isSubmitting}>
                 {isSubmitting ? "Validando..." : "Validar check-in"}
               </Button>
             </div>
+
+            {nfcError && (
+              <p className="mt-3 text-sm text-amber-700">{nfcError}</p>
+            )}
 
             {checkinMessage && (
               <p className="mt-3 text-sm text-muted-foreground">

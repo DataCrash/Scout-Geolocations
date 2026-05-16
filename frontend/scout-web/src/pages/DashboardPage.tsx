@@ -7,11 +7,16 @@ import {
   type ChallengeItem,
 } from "@/services/adminChallengesApi";
 import { validateChallenge } from "@/services/challengeApi";
+import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
+import {
+  enqueueCheckinSubmission,
+  flushCheckinQueue,
+  getQueuedCheckinsCount,
+} from "@/services/offlineCheckinQueue";
 import {
   analyzePhotoLocally,
   type PhotoInferenceResult,
 } from "@/services/photoInference";
-import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
 import {
   analyzePhotoWithVisionApi,
   type VisionAnalysisResponse,
@@ -174,6 +179,46 @@ export default function DashboardPage() {
 
       stream.getTracks().forEach((track) => track.stop());
       cameraStreamRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function syncOfflineQueue() {
+      if (!navigator.onLine) {
+        return;
+      }
+
+      try {
+        const result = await flushCheckinQueue(validateChallenge);
+        if (!active || result.synced <= 0) {
+          return;
+        }
+
+        setCheckinMessage(
+          `Sincronização offline concluída: ${result.synced} submissão(ões) enviada(s).`,
+        );
+      } catch {
+        if (active) {
+          setCheckinMessage(
+            "Falha ao sincronizar fila offline. Tentaremos novamente ao reconectar.",
+          );
+        }
+      }
+    }
+
+    void syncOfflineQueue();
+
+    const handleOnline = () => {
+      void syncOfflineQueue();
+    };
+
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      active = false;
+      window.removeEventListener("online", handleOnline);
     };
   }, []);
 
@@ -387,15 +432,17 @@ export default function DashboardPage() {
     setIsSubmitting(true);
     setCheckinMessage("");
 
+    const payload = {
+      PatrulhaId: patrulhaId,
+      UserId: userId,
+      ScannedQrCode: qrCode || undefined,
+      Latitude: latitude ? Number(latitude) : undefined,
+      Longitude: longitude ? Number(longitude) : undefined,
+      PhotoBase64: photoPreview || undefined,
+    };
+
     try {
-      const result = await validateChallenge(challengeId, {
-        PatrulhaId: patrulhaId,
-        UserId: userId,
-        ScannedQrCode: qrCode || undefined,
-        Latitude: latitude ? Number(latitude) : undefined,
-        Longitude: longitude ? Number(longitude) : undefined,
-        PhotoBase64: photoPreview || undefined,
-      });
+      const result = await validateChallenge(challengeId, payload);
 
       if (result.status === 1) {
         setCheckinMessage(
@@ -412,6 +459,28 @@ export default function DashboardPage() {
         );
       }
     } catch (error) {
+      const isNetworkError =
+        !navigator.onLine ||
+        (error instanceof TypeError &&
+          /fetch|network|failed/i.test(error.message));
+
+      if (isNetworkError) {
+        try {
+          await enqueueCheckinSubmission(challengeId, payload);
+          const queueSize = await getQueuedCheckinsCount();
+
+          setCheckinMessage(
+            `Sem conexão. Check-in salvo na fila offline (${queueSize} pendente(s)).`,
+          );
+          return;
+        } catch {
+          setCheckinMessage(
+            "Sem conexão e não foi possível salvar na fila offline.",
+          );
+          return;
+        }
+      }
+
       setCheckinMessage(
         error instanceof Error ? error.message : "Erro no check-in.",
       );
@@ -624,13 +693,22 @@ export default function DashboardPage() {
                   Rótulo estimado: <strong>{photoInference.label}</strong>
                 </p>
                 <p>
-                  Confiança: <strong>{Math.round(photoInference.confidence * 100)}%</strong>
+                  Confiança:{" "}
+                  <strong>
+                    {Math.round(photoInference.confidence * 100)}%
+                  </strong>
                 </p>
                 <p>
-                  Contraste: <strong>{photoInference.contrast.toFixed(3)}</strong>
+                  Contraste:{" "}
+                  <strong>{photoInference.contrast.toFixed(3)}</strong>
                 </p>
                 <p>
-                  Decisão: <strong>{photoInference.requiresBackendFallback ? "encaminhar para fallback backend" : "classificação local suficiente para triagem"}</strong>
+                  Decisão:{" "}
+                  <strong>
+                    {photoInference.requiresBackendFallback
+                      ? "encaminhar para fallback backend"
+                      : "classificação local suficiente para triagem"}
+                  </strong>
                 </p>
               </div>
             )}
@@ -644,10 +722,18 @@ export default function DashboardPage() {
                   Rótulo backend: <strong>{backendVisionResult.label}</strong>
                 </p>
                 <p>
-                  Confiança backend: <strong>{Math.round(backendVisionResult.confidence * 100)}%</strong>
+                  Confiança backend:{" "}
+                  <strong>
+                    {Math.round(backendVisionResult.confidence * 100)}%
+                  </strong>
                 </p>
                 <p>
-                  Revisão manual: <strong>{backendVisionResult.requiresManualReview ? "necessária" : "dispensada na triagem"}</strong>
+                  Revisão manual:{" "}
+                  <strong>
+                    {backendVisionResult.requiresManualReview
+                      ? "necessária"
+                      : "dispensada na triagem"}
+                  </strong>
                 </p>
               </div>
             )}

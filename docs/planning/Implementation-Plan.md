@@ -199,6 +199,13 @@
 - Service Worker + IndexedDB para fila offline.
 - Sincronização de submissões pendentes ao reconectar.
 
+### Status incremental atual (May 16, 2026)
+
+- [x] Fila offline de check-ins implementada no frontend com IndexedDB.
+- [x] Sincronização automática de submissões pendentes ao reconectar.
+- [ ] Service Worker de apoio à estratégia offline-first.
+- [ ] Slice inicial de WebNFC com fallback para QR.
+
 ---
 
 ## Fase 4 — M4: Social + Gamificação Avançada

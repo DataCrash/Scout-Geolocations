@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const [adminDescription, setAdminDescription] = useState(
     "Valide com QR no ponto A.",
   );
+  const [adminType, setAdminType] = useState<number>(0);
   const [adminQr, setAdminQr] = useState("QR-DEMO-001");
   const [adminMessage, setAdminMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
@@ -147,8 +148,8 @@ export default function DashboardPage() {
         eventId,
         title: adminTitle,
         description: adminDescription,
-        type: 0,
-        qrCode: adminQr,
+        type: adminType,
+        qrCode: adminType === 0 || adminType === 2 ? adminQr : undefined,
         radiusMeters: 30,
         basePoints: 10,
         bonusPoints: 5,
@@ -422,6 +423,16 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-2">
+              <select
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                value={adminType}
+                onChange={(event) => setAdminType(Number(event.target.value))}
+              >
+                <option value={0}>QR Code</option>
+                <option value={1}>Geolocalização</option>
+                <option value={2}>QR + Geolocalização</option>
+                <option value={3}>Photo Challenge (manual)</option>
+              </select>
               <input
                 className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
                 value={adminTitle}
@@ -438,7 +449,7 @@ export default function DashboardPage() {
                 className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
                 value={adminQr}
                 onChange={(event) => setAdminQr(event.target.value)}
-                placeholder="QR esperado"
+                placeholder="QR esperado (somente tipos com QR)"
               />
             </div>
 

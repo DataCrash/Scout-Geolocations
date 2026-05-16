@@ -143,6 +143,14 @@
 
 **Estimativa:** 2–3 semanas.
 
+### Status incremental atual (May 15, 2026)
+
+- [x] Tipo de desafio `PhotoChallenge` adicionado no Challenge Service.
+- [x] Fallback inicial de validação manual implementado (tentativas com status `Pending` + evento AUDIT `checkin.pending_manual`).
+- [ ] Captura de câmera no frontend para submissão fotográfica.
+- [ ] Inferência local com TensorFlow.js.
+- [ ] Vision Service com ONNX Runtime para fallback de inferência.
+
 ### Critérios de aceite
 
 - [ ] Câmera ativada no cliente com captura de foto para desafio.

@@ -137,6 +137,26 @@ public class ChallengeService(ChallengeDbContext db, IMediator mediator, ILogger
             Longitude = req.Longitude,
         };
 
+        // M2 (slice inicial): desafios fotográficos entram em validação manual.
+        if (challenge.Type == ChallengeType.PhotoChallenge)
+        {
+            attempt.Status = AttemptStatus.Pending;
+            attempt.FailReason = "Validação manual pendente para desafio fotográfico";
+
+            db.ChallengeAttempts.Add(attempt);
+            await db.SaveChangesAsync(ct);
+
+            logger.LogInformation(
+                "AUDIT checkin.pending_manual attemptId={AttemptId} challengeId={ChallengeId} patrulhaId={PatrulhaId} userId={UserId} challengeType={ChallengeType}",
+                attempt.Id,
+                challengeId,
+                req.PatrulhaId,
+                req.UserId,
+                challenge.Type);
+
+            return MapAttemptResponse(attempt);
+        }
+
         var (valid, failReason, distance) = ValidateAttempt(challenge, req);
 
         if (valid)
@@ -217,6 +237,14 @@ public class ChallengeService(ChallengeDbContext db, IMediator mediator, ILogger
     private static (bool Valid, string? FailReason, double? Distance)
         ValidateAttempt(Domain.Entities.Challenge challenge, ValidateChallengeRequest req)
     {
+        if (challenge.Type == ChallengeType.PhotoChallenge)
+            return (false, "Desafio fotográfico requer validação manual", null);
+
+        if (challenge.Type is not ChallengeType.QRCode
+            and not ChallengeType.Geolocation
+            and not ChallengeType.QRCodeAndGeolocation)
+            return (false, "Tipo de desafio não suportado", null);
+
         bool qrOk = true, geoOk = true;
         double? distance = null;
         string? fail = null;

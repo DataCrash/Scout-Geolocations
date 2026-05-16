@@ -183,6 +183,11 @@ services:
       - Jwt__Audience=scout-geolocations-client
       - Vision__Onnx__Enabled=false
       - Vision__Onnx__ModelPath=
+      - Vision__Onnx__LabelsPath=
+      - Vision__Onnx__InputName=
+      - Vision__Onnx__OutputName=
+      - Vision__Onnx__InputWidth=224
+      - Vision__Onnx__InputHeight=224
     restart: unless-stopped
 
 volumes:

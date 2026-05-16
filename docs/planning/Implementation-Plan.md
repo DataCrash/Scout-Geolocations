@@ -162,6 +162,9 @@
       admin, validação com `PhotoBase64` e retorno `Pending`.
 - [x] E2E real adicionado para `Vision API` cobrindo autenticação e
       análise de foto (`/api/vision/analyze-photo`).
+- [x] E2E frontend real adicionado para fluxo ponta a ponta de foto no
+      Dashboard (câmera simulada, inferência local, fallback backend e
+      validação `Pending`).
 
 ### Critérios de aceite
 

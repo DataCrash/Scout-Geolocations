@@ -158,6 +158,8 @@
 - [x] Vision Service backend criado com endpoint
       `/api/vision/analyze-photo`, fallback heurístico e caminho de
       inferência ONNX real quando modelo e labels são configurados.
+- [x] E2E real adicionado para fluxo `PhotoChallenge` cobrindo criação
+      admin, validação com `PhotoBase64` e retorno `Pending`.
 
 ### Critérios de aceite
 

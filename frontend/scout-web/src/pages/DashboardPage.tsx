@@ -24,6 +24,21 @@ import { useNavigate } from "react-router-dom";
 
 const center: [number, number] = [-23.5505, -46.6333];
 
+function getChallengeTypeLabel(type: number) {
+  switch (type) {
+    case 0:
+      return "QR Code";
+    case 1:
+      return "Geolocalização";
+    case 2:
+      return "QR + Geolocalização";
+    case 3:
+      return "Photo Challenge";
+    default:
+      return "Desconhecido";
+  }
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -332,6 +347,11 @@ export default function DashboardPage() {
         setCheckinMessage(
           `Check-in validado: +${result.pointsAwarded} pontos.`,
         );
+      } else if (result.status === 0) {
+        setCheckinMessage(
+          result.failReason ??
+            "Submissão recebida e pendente de validação manual.",
+        );
       } else {
         setCheckinMessage(
           result.failReason ?? "Check-in processado, mas sem validação.",
@@ -606,6 +626,7 @@ export default function DashboardPage() {
                 value={adminQr}
                 onChange={(event) => setAdminQr(event.target.value)}
                 placeholder="QR esperado (somente tipos com QR)"
+                disabled={adminType !== 0 && adminType !== 2}
               />
             </div>
 
@@ -638,6 +659,9 @@ export default function DashboardPage() {
                   className="rounded-xl border border-border bg-white p-3"
                 >
                   <p className="text-sm font-semibold">{challenge.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Tipo: {getChallengeTypeLabel(challenge.type)}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Status: {challenge.status === 1 ? "Ativo" : "Inativo/Draft"}
                   </p>

@@ -24,8 +24,15 @@ export async function loginWithGoogle(
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Google login failed");
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      const error = await response.json();
+      throw new Error(error?.detail || error?.title || "Google login failed");
+    }
+
+    const errorText = await response.text();
+    throw new Error(errorText || "Google login failed");
   }
 
   return response.json();
@@ -43,7 +50,17 @@ export async function getOAuthAuthorizeUrl(): Promise<{
   });
 
   if (!response.ok) {
-    throw new Error("Failed to get authorization URL");
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      const error = await response.json();
+      throw new Error(
+        error?.detail || error?.title || "Failed to get authorization URL",
+      );
+    }
+
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to get authorization URL");
   }
 
   return response.json();

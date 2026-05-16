@@ -22,5 +22,10 @@ public class GoogleAuthService(IConfiguration config)
         {
             return null;
         }
+        catch (ArgumentException)
+        {
+            // Token malformado (ex.: vazio, inválido ou fora do formato JWT esperado).
+            return null;
+        }
     }
 }

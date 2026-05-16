@@ -1,4 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
+import { getAuthHeader } from "@/store/useAuthStore";
+
+const API_BASE_URL =
+  import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
 
 export type ValidateChallengeRequest = {
   PatrulhaId: string;
@@ -6,6 +9,7 @@ export type ValidateChallengeRequest = {
   ScannedQrCode?: string;
   Latitude?: number;
   Longitude?: number;
+  PhotoBase64?: string;
 };
 
 export type AttemptResponse = {
@@ -21,29 +25,28 @@ export type AttemptResponse = {
   validatedAt?: string;
 };
 
-function getAccessToken() {
-  return localStorage.getItem("access_token") ?? "";
-}
-
 export async function validateChallenge(
   challengeId: string,
   payload: ValidateChallengeRequest,
 ): Promise<AttemptResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/challenges/${challengeId}/validate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getAccessToken()}`,
+  const response = await fetch(
+    `${API_BASE_URL}/api/challenges/${challengeId}/validate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+  );
 
   if (!response.ok) {
     let detail = "Falha ao validar check-in.";
 
     try {
       const data = await response.json();
-      detail = typeof data === "string" ? data : data?.message ?? detail;
+      detail = typeof data === "string" ? data : (data?.message ?? detail);
     } catch {
       const text = await response.text();
       if (text) {

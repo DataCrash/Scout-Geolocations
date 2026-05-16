@@ -8,6 +8,7 @@ public class CacheDbContext : DbContext
     public CacheDbContext(DbContextOptions<CacheDbContext> options) : base(options) { }
 
     public DbSet<Geocache> Geocaches => Set<Geocache>();
+    public DbSet<Roteiro> Roteiros => Set<Roteiro>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,5 +24,16 @@ public class CacheDbContext : DbContext
         geocache.HasIndex(g => g.EventId);
         geocache.HasIndex(g => g.QrCode).IsUnique().HasFilter("\"QrCode\" IS NOT NULL");
         geocache.HasIndex(g => new { g.Latitude, g.Longitude });
+
+        var roteiro = modelBuilder.Entity<Roteiro>();
+
+        roteiro.HasKey(r => r.Id);
+        roteiro.Property(r => r.Name).IsRequired().HasMaxLength(200);
+        roteiro.Property(r => r.Description).HasMaxLength(2000);
+        roteiro.Property(r => r.Status).HasConversion<string>();
+
+        roteiro.HasIndex(r => r.EventId);
+        roteiro.HasIndex(r => new { r.EventId, r.Sequence });
+        roteiro.HasIndex(r => new { r.EventId, r.Name }).IsUnique();
     }
 }

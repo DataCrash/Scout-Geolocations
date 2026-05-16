@@ -10,6 +10,9 @@ public static class DevDataSeeder
     public static readonly Guid SeedEventId =
         Guid.Parse("00000000-0000-0000-0000-000000000001");
 
+    public static readonly Guid SeedRoteiroId01 =
+        Guid.Parse("00000000-0000-0000-0000-000000000201");
+
     public static readonly Guid SeedCacheId01 =
         Guid.Parse("00000000-0000-0000-0000-000000000101");
 
@@ -24,6 +27,15 @@ public static class DevDataSeeder
 
     public static readonly Guid SeedCacheId05 =
         Guid.Parse("00000000-0000-0000-0000-000000000105");
+
+    private static readonly SeedRoteiro[] SeedRoteiros =
+    [
+        new(
+            SeedRoteiroId01,
+            "Roteiro Centro Historico",
+            "Roteiro oficial de aceite M1 para validacao de fluxo admin e seed de evento.",
+            1),
+    ];
 
     private static readonly SeedGeocache[] SeedGeocaches =
     [
@@ -79,6 +91,34 @@ public static class DevDataSeeder
         IDatabase redis,
         CancellationToken ct = default)
     {
+        foreach (var seed in SeedRoteiros)
+        {
+            var roteiro = await db.Roteiros.FirstOrDefaultAsync(r => r.Id == seed.Id, ct);
+
+            if (roteiro is null)
+            {
+                db.Roteiros.Add(new Roteiro
+                {
+                    Id = seed.Id,
+                    EventId = SeedEventId,
+                    Name = seed.Name,
+                    Description = seed.Description,
+                    Sequence = seed.Sequence,
+                    Status = RoteiroStatus.Active,
+                    CreatedAt = DateTime.UtcNow,
+                });
+
+                continue;
+            }
+
+            roteiro.EventId = SeedEventId;
+            roteiro.Name = seed.Name;
+            roteiro.Description = seed.Description;
+            roteiro.Sequence = seed.Sequence;
+            roteiro.Status = RoteiroStatus.Active;
+            roteiro.UpdatedAt = DateTime.UtcNow;
+        }
+
         foreach (var seed in SeedGeocaches)
         {
             var cache = await db.Geocaches.FirstOrDefaultAsync(g => g.Id == seed.Id, ct);
@@ -138,4 +178,10 @@ public static class DevDataSeeder
         string QrCode,
         int RadiusMeters,
         int BasePoints);
+
+    private sealed record SeedRoteiro(
+        Guid Id,
+        string Name,
+        string Description,
+        int Sequence);
 }

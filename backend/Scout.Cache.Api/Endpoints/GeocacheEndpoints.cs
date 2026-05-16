@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Scout.Cache.Api.Contracts;
 using Scout.Cache.Api.Services;
@@ -45,16 +46,33 @@ public static class GeocacheEndpoints
 
     private static async Task<IResult> CreateCache(
         CreateGeocacheRequest req,
+        ClaimsPrincipal principal,
+        ILogger<Program> logger,
         GeocacheService svc,
         CancellationToken ct)
     {
+        var actorId = principal.FindFirstValue("sub") ?? "unknown";
+
         try
         {
             var result = await svc.CreateAsync(req, ct);
+
+            logger.LogInformation(
+                "AUDIT admin.geocache.created actorId={ActorId} geocacheId={GeocacheId} eventId={EventId}",
+                actorId,
+                result.Id,
+                result.EventId);
+
             return Results.Created($"/api/geocaches/{result.Id}", result);
         }
         catch (ArgumentException ex)
         {
+            logger.LogWarning(
+                "AUDIT admin.geocache.create.invalid actorId={ActorId} eventId={EventId} message={Message}",
+                actorId,
+                req.EventId,
+                ex.Message);
+
             return Results.BadRequest(new { error = ex.Message });
         }
     }
@@ -74,17 +92,59 @@ public static class GeocacheEndpoints
     private static async Task<IResult> UpdateCache(
         Guid id,
         UpdateGeocacheRequest req,
+        ClaimsPrincipal principal,
+        ILogger<Program> logger,
         GeocacheService svc,
         CancellationToken ct)
     {
+        var actorId = principal.FindFirstValue("sub") ?? "unknown";
         var result = await svc.UpdateAsync(id, req, ct);
-        return result is null ? Results.NotFound() : Results.Ok(result);
+
+        if (result is null)
+        {
+            logger.LogWarning(
+                "AUDIT admin.geocache.update.notfound actorId={ActorId} geocacheId={GeocacheId}",
+                actorId,
+                id);
+
+            return Results.NotFound();
+        }
+
+        logger.LogInformation(
+            "AUDIT admin.geocache.updated actorId={ActorId} geocacheId={GeocacheId} eventId={EventId}",
+            actorId,
+            result.Id,
+            result.EventId);
+
+        return Results.Ok(result);
     }
 
-    private static async Task<IResult> DeleteCache(Guid id, GeocacheService svc, CancellationToken ct)
+    private static async Task<IResult> DeleteCache(
+        Guid id,
+        ClaimsPrincipal principal,
+        ILogger<Program> logger,
+        GeocacheService svc,
+        CancellationToken ct)
     {
+        var actorId = principal.FindFirstValue("sub") ?? "unknown";
         var deleted = await svc.DeleteAsync(id, ct);
-        return deleted ? Results.NoContent() : Results.NotFound();
+
+        if (!deleted)
+        {
+            logger.LogWarning(
+                "AUDIT admin.geocache.delete.notfound actorId={ActorId} geocacheId={GeocacheId}",
+                actorId,
+                id);
+
+            return Results.NotFound();
+        }
+
+        logger.LogInformation(
+            "AUDIT admin.geocache.deleted actorId={ActorId} geocacheId={GeocacheId}",
+            actorId,
+            id);
+
+        return Results.NoContent();
     }
 
     private static async Task<IResult> FindNearby(

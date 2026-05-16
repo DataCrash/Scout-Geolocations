@@ -92,9 +92,21 @@ test.describe("frontend MVP com backend real", () => {
     });
     await context.setGeolocation({ latitude: -23.55052, longitude: -46.63331 });
 
-    await page.addInitScript((token) => {
-      localStorage.setItem("access_token", token);
-    }, auth.token);
+    await page.addInitScript(
+      ({ token, userId, name }) => {
+        localStorage.setItem(
+          "auth-store",
+          JSON.stringify({
+            state: {
+              token,
+              user: { id: userId, name, role: "Convidado" },
+            },
+            version: 0,
+          }),
+        );
+      },
+      { token: auth.token, userId: auth.userId, name: auth.name },
+    );
 
     await page.goto("/");
 
@@ -138,9 +150,21 @@ test.describe("frontend MVP com backend real", () => {
     });
     await context.setGeolocation({ latitude: -23.55052, longitude: -46.63331 });
 
-    await page.addInitScript((token) => {
-      localStorage.setItem("access_token", token);
-    }, auth.token);
+    await page.addInitScript(
+      ({ token, userId, name }) => {
+        localStorage.setItem(
+          "auth-store",
+          JSON.stringify({
+            state: {
+              token,
+              user: { id: userId, name, role: "Convidado" },
+            },
+            version: 0,
+          }),
+        );
+      },
+      { token: auth.token, userId: auth.userId, name: auth.name },
+    );
 
     await page.goto("/");
 

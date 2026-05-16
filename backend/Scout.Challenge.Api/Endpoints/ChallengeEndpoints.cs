@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Scout.Challenge.Api.Contracts;
 using Scout.Challenge.Api.Services;
 
@@ -32,19 +33,47 @@ public static class ChallengeEndpoints
 
         // POST /api/challenges/{id}/validate
         group.MapPost("/{id:guid}/validate",
-            async (Guid id, ValidateChallengeRequest req, ChallengeService svc, CancellationToken ct) =>
+            async (
+                Guid id,
+                ValidateChallengeRequest req,
+                ClaimsPrincipal principal,
+                ChallengeService svc,
+                ILogger<Program> logger,
+                CancellationToken ct) =>
             {
+                var actorId = principal.FindFirstValue("sub") ?? "unknown";
+
                 try
                 {
                     var result = await svc.ValidateAsync(id, req, ct);
+
+                    logger.LogInformation(
+                        "AUDIT checkin.request.processed actorId={ActorId} challengeId={ChallengeId} attemptId={AttemptId} status={Status}",
+                        actorId,
+                        id,
+                        result.Id,
+                        result.Status);
+
                     return Results.Ok(result);
                 }
                 catch (KeyNotFoundException ex)
                 {
+                    logger.LogWarning(
+                        "AUDIT checkin.request.notfound actorId={ActorId} challengeId={ChallengeId} message={Message}",
+                        actorId,
+                        id,
+                        ex.Message);
+
                     return Results.NotFound(ex.Message);
                 }
                 catch (InvalidOperationException ex)
                 {
+                    logger.LogWarning(
+                        "AUDIT checkin.request.conflict actorId={ActorId} challengeId={ChallengeId} message={Message}",
+                        actorId,
+                        id,
+                        ex.Message);
+
                     return Results.Conflict(ex.Message);
                 }
             })

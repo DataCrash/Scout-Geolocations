@@ -11,11 +11,33 @@ import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import L from "leaflet";
-import { Compass, LogOut, QrCode, ShieldCheck, Trophy } from "lucide-react";
+import {
+  Camera,
+  Compass,
+  LogOut,
+  QrCode,
+  ShieldCheck,
+  Trophy,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const center: [number, number] = [-23.5505, -46.6333];
+
+function getChallengeTypeLabel(type: number) {
+  switch (type) {
+    case 0:
+      return "QR Code";
+    case 1:
+      return "Geolocalização";
+    case 2:
+      return "QR + Geolocalização";
+    case 3:
+      return "Photo Challenge";
+    default:
+      return "Desconhecido";
+  }
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -23,6 +45,9 @@ export default function DashboardPage() {
   const { eventId, scores, bumpPatrol, applyRealtimeUpdate, lastRealtimeAt } =
     useLeaderboardStore();
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const [challengeId, setChallengeId] = useState(
     "00000000-0000-0000-0000-000000000010",
@@ -44,9 +69,14 @@ export default function DashboardPage() {
   const [adminDescription, setAdminDescription] = useState(
     "Valide com QR no ponto A.",
   );
+  const [adminType, setAdminType] = useState<number>(0);
   const [adminQr, setAdminQr] = useState("QR-DEMO-001");
   const [adminMessage, setAdminMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
+  const [cameraMessage, setCameraMessage] = useState<string>("");
+  const [photoPreview, setPhotoPreview] = useState<string>("");
 
   const handleLogout = () => {
     logout();
@@ -122,6 +152,18 @@ export default function DashboardPage() {
     };
   }, [applyRealtimeUpdate, eventId]);
 
+  useEffect(() => {
+    return () => {
+      const stream = cameraStreamRef.current;
+      if (!stream) {
+        return;
+      }
+
+      stream.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    };
+  }, []);
+
   async function refreshAdminChallenges() {
     setIsAdminLoading(true);
     setAdminMessage("");
@@ -147,8 +189,8 @@ export default function DashboardPage() {
         eventId,
         title: adminTitle,
         description: adminDescription,
-        type: 0,
-        qrCode: adminQr,
+        type: adminType,
+        qrCode: adminType === 0 || adminType === 2 ? adminQr : undefined,
         radiusMeters: 30,
         basePoints: 10,
         bonusPoints: 5,
@@ -214,6 +256,79 @@ export default function DashboardPage() {
     );
   }
 
+  async function handleOpenCamera() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraMessage("Câmera não suportada neste navegador.");
+      return;
+    }
+
+    setIsCameraLoading(true);
+    setCameraMessage("");
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+        },
+        audio: false,
+      });
+
+      cameraStreamRef.current = stream;
+      setIsCameraOpen(true);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch {
+      setCameraMessage("Não foi possível acessar a câmera.");
+      setIsCameraOpen(false);
+    } finally {
+      setIsCameraLoading(false);
+    }
+  }
+
+  function handleCloseCamera() {
+    const stream = cameraStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    cameraStreamRef.current = null;
+    setIsCameraOpen(false);
+  }
+
+  function handleTakePhoto() {
+    if (!videoRef.current || !canvasRef.current) {
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (!width || !height) {
+      setCameraMessage("A câmera ainda não está pronta para captura.");
+      return;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setCameraMessage("Falha ao preparar captura da imagem.");
+      return;
+    }
+
+    context.drawImage(video, 0, 0, width, height);
+    setPhotoPreview(canvas.toDataURL("image/jpeg", 0.85));
+    setCameraMessage(
+      "Foto capturada. Próximo passo: enviar para validação de IA.",
+    );
+  }
+
   async function handleValidateCheckin() {
     setIsSubmitting(true);
     setCheckinMessage("");
@@ -225,11 +340,17 @@ export default function DashboardPage() {
         ScannedQrCode: qrCode || undefined,
         Latitude: latitude ? Number(latitude) : undefined,
         Longitude: longitude ? Number(longitude) : undefined,
+        PhotoBase64: photoPreview || undefined,
       });
 
       if (result.status === 1) {
         setCheckinMessage(
           `Check-in validado: +${result.pointsAwarded} pontos.`,
+        );
+      } else if (result.status === 0) {
+        setCheckinMessage(
+          result.failReason ??
+            "Submissão recebida e pendente de validação manual.",
         );
       } else {
         setCheckinMessage(
@@ -383,6 +504,62 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
+
+          <div className="mt-6 rounded-2xl border border-border/70 bg-white/70 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Camera className="h-4 w-4" />
+              Photo Challenge (M2 preview)
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="ghost"
+                onClick={handleOpenCamera}
+                disabled={isCameraLoading || isCameraOpen}
+              >
+                {isCameraLoading ? "Abrindo câmera..." : "Abrir câmera"}
+              </Button>
+              <Button onClick={handleTakePhoto} disabled={!isCameraOpen}>
+                Capturar foto
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleCloseCamera}
+                disabled={!isCameraOpen}
+              >
+                Fechar câmera
+              </Button>
+            </div>
+
+            {isCameraOpen && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-border/70 bg-black/80">
+                <video
+                  ref={videoRef}
+                  className="h-auto w-full"
+                  playsInline
+                  muted
+                />
+              </div>
+            )}
+
+            {photoPreview && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-border/70 bg-white">
+                <img
+                  src={photoPreview}
+                  alt="Prévia da foto capturada"
+                  className="h-auto w-full"
+                />
+              </div>
+            )}
+
+            <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
+
+            {cameraMessage && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {cameraMessage}
+              </p>
+            )}
+          </div>
         </section>
 
         <aside className="animate-fade-up rounded-3xl border border-border/60 bg-card/90 p-6 shadow-xl backdrop-blur [animation-delay:130ms] md:p-8">
@@ -422,6 +599,16 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-2">
+              <select
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                value={adminType}
+                onChange={(event) => setAdminType(Number(event.target.value))}
+              >
+                <option value={0}>QR Code</option>
+                <option value={1}>Geolocalização</option>
+                <option value={2}>QR + Geolocalização</option>
+                <option value={3}>Photo Challenge (manual)</option>
+              </select>
               <input
                 className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
                 value={adminTitle}
@@ -438,7 +625,8 @@ export default function DashboardPage() {
                 className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
                 value={adminQr}
                 onChange={(event) => setAdminQr(event.target.value)}
-                placeholder="QR esperado"
+                placeholder="QR esperado (somente tipos com QR)"
+                disabled={adminType !== 0 && adminType !== 2}
               />
             </div>
 
@@ -471,6 +659,9 @@ export default function DashboardPage() {
                   className="rounded-xl border border-border bg-white p-3"
                 >
                   <p className="text-sm font-semibold">{challenge.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Tipo: {getChallengeTypeLabel(challenge.type)}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Status: {challenge.status === 1 ? "Ativo" : "Inativo/Draft"}
                   </p>

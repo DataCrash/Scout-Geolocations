@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Scout.Identity.Api.Contracts;
 using Scout.Identity.Api.Domain.Entities;
@@ -21,6 +22,7 @@ public static class AuthEndpoints
             JwtService jwt,
             IdentityDbContext db,
             IConfiguration config,
+            ILogger<Program> logger,
             CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(req.IdToken))
@@ -28,14 +30,24 @@ public static class AuthEndpoints
 
             var payload = await googleAuth.ValidateAsync(req.IdToken);
             if (payload is null)
+            {
+                logger.LogWarning("AUDIT auth.google.login.invalid_token");
                 return Results.Unauthorized();
+            }
 
             if (!payload.Email.EndsWith("@escoteiros.org.br", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning(
+                    "AUDIT auth.google.login.blocked_domain email={Email}",
+                    payload.Email);
+
                 return Results.Problem(
                     detail: "Apenas contas @escoteiros.org.br são permitidas",
                     statusCode: StatusCodes.Status403Forbidden);
+            }
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == payload.Subject, ct);
+            var created = false;
 
             if (user is null)
             {
@@ -56,7 +68,14 @@ public static class AuthEndpoints
 
                 db.Users.Add(user);
                 await db.SaveChangesAsync(ct);
+                created = true;
             }
+
+            logger.LogInformation(
+                "AUDIT auth.google.login.success userId={UserId} role={Role} created={Created}",
+                user.Id,
+                user.Role,
+                created);
 
             return Results.Ok(new AuthResponse(jwt.Generate(user), user.Id, user.Name, user.Role.ToString()));
         });
@@ -66,6 +85,7 @@ public static class AuthEndpoints
             GuestLoginRequest req,
             JwtService jwt,
             IdentityDbContext db,
+            ILogger<Program> logger,
             CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(req.Name))
@@ -82,6 +102,11 @@ public static class AuthEndpoints
             db.Users.Add(user);
             await db.SaveChangesAsync(ct);
 
+            logger.LogInformation(
+                "AUDIT auth.guest.login.success userId={UserId} role={Role}",
+                user.Id,
+                user.Role);
+
             return Results.Ok(new AuthResponse(jwt.Generate(user), user.Id, user.Name, user.Role.ToString()));
         });
 
@@ -89,6 +114,7 @@ public static class AuthEndpoints
         group.MapGet("/me", async (
             ClaimsPrincipal principal,
             IdentityDbContext db,
+            ILogger<Program> logger,
             CancellationToken ct) =>
         {
             if (!Guid.TryParse(principal.FindFirstValue("sub"), out var userId))
@@ -97,16 +123,24 @@ public static class AuthEndpoints
             var user = await db.Users.FindAsync([userId], ct);
             if (user is null) return Results.NotFound();
 
+            logger.LogInformation(
+                "AUDIT auth.me.success userId={UserId} role={Role}",
+                user.Id,
+                user.Role);
+
             return Results.Ok(new UserResponse(user.Id, user.Name, user.Email, user.Role.ToString()));
         }).RequireAuthorization();
 
         // POST /auth/google/authorize — inicia fluxo OAuth2 do Google
         group.MapPost("/google/authorize", (
             GoogleOAuthService oauthService,
-            IConfiguration config) =>
+            IConfiguration config,
+            ILogger<Program> logger) =>
         {
             var state = Guid.NewGuid().ToString();
             var authUrl = oauthService.GetAuthorizationUrl(state);
+
+            logger.LogInformation("AUDIT auth.google.authorize.issued state={State}", state);
 
             return Results.Ok(new OAuthAuthorizeResponse(authUrl, state));
         });
@@ -119,6 +153,7 @@ public static class AuthEndpoints
             JwtService jwt,
             IdentityDbContext db,
             IConfiguration config,
+            ILogger<Program> logger,
             CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -126,14 +161,25 @@ public static class AuthEndpoints
 
             var payload = await oauthService.ExchangeCodeForTokenAsync(code, ct);
             if (payload is null)
+            {
+                logger.LogWarning("AUDIT auth.google.callback.invalid_code state={State}", state);
                 return Results.Unauthorized();
+            }
 
             if (!payload.Email.EndsWith("@escoteiros.org.br", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning(
+                    "AUDIT auth.google.callback.blocked_domain email={Email} state={State}",
+                    payload.Email,
+                    state);
+
                 return Results.Problem(
                     detail: "Apenas contas @escoteiros.org.br são permitidas",
                     statusCode: StatusCodes.Status403Forbidden);
+            }
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == payload.Subject, ct);
+            var created = false;
 
             if (user is null)
             {
@@ -154,11 +200,27 @@ public static class AuthEndpoints
 
                 db.Users.Add(user);
                 await db.SaveChangesAsync(ct);
+                created = true;
             }
 
             var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:5173";
             var jwtToken = jwt.Generate(user);
-            var redirectUrl = $"{frontendUrl}/auth/callback?token={jwtToken}&userId={user.Id}&name={user.Name}&role={user.Role}";
+            var redirectUrl = QueryHelpers.AddQueryString(
+                $"{frontendUrl}/auth/callback",
+                new Dictionary<string, string?>
+                {
+                    ["token"] = jwtToken,
+                    ["userId"] = user.Id.ToString(),
+                    ["name"] = user.Name,
+                    ["role"] = user.Role.ToString(),
+                });
+
+            logger.LogInformation(
+                "AUDIT auth.google.callback.success userId={UserId} role={Role} created={Created} state={State}",
+                user.Id,
+                user.Role,
+                created,
+                state);
 
             return Results.Redirect(redirectUrl);
         });

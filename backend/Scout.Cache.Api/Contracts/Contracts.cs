@@ -31,6 +31,20 @@ public record NearbySearchRequest(
     Guid? EventId
 );
 
+public record CreateRoteiroRequest(
+    Guid EventId,
+    string Name,
+    string Description,
+    int Sequence
+);
+
+public record UpdateRoteiroRequest(
+    string? Name,
+    string? Description,
+    string? Status,
+    int? Sequence
+);
+
 // ── Responses ────────────────────────────────────────────────────────────────
 
 public record GeocacheResponse(
@@ -57,4 +71,14 @@ public record NearbyGeocacheResponse(
     double Longitude,
     double DistanceKm,
     int BasePoints
+);
+
+public record RoteiroResponse(
+    Guid Id,
+    Guid EventId,
+    string Name,
+    string Description,
+    string Status,
+    int Sequence,
+    DateTime CreatedAt
 );

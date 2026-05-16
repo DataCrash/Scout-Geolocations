@@ -15,6 +15,13 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
 // ── Autenticação JWT ──────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key deve ser configurado via variável de ambiente");
+var jwtKeySizeInBytes = Encoding.UTF8.GetByteCount(jwtKey);
+
+if (jwtKeySizeInBytes < 32)
+{
+    throw new InvalidOperationException(
+        $"Jwt:Key deve ter pelo menos 32 bytes para HS256. Valor atual: {jwtKeySizeInBytes} bytes.");
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

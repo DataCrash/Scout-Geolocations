@@ -4,5 +4,6 @@ public enum ChallengeType
 {
     QRCode = 0,
     Geolocation = 1,
-    QRCodeAndGeolocation = 2
+    QRCodeAndGeolocation = 2,
+    PhotoChallenge = 3
 }

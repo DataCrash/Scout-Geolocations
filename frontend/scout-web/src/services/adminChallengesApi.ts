@@ -1,3 +1,5 @@
+import { getAuthHeader } from "@/store/useAuthStore";
+
 const API_BASE_URL =
   import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
 
@@ -35,11 +37,9 @@ export type CreateChallengePayload = {
 };
 
 function authHeaders() {
-  const token = localStorage.getItem("access_token") ?? "";
-
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+    ...getAuthHeader(),
   };
 }
 

@@ -53,6 +53,7 @@ builder.Services.AddMediatR(cfg =>
 
 // ── Serviços de domínio ───────────────────────────────────────────────────────
 builder.Services.AddScoped<GeocacheService>();
+builder.Services.AddScoped<RoteiroService>();
 
 // ── OpenAPI / Documentação ────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
@@ -83,7 +84,18 @@ if (app.Environment.IsDevelopment())
     var redis = scope.ServiceProvider.GetRequiredService<IConnectionMultiplexer>()
         .GetDatabase();
 
-    await db.Database.MigrateAsync();
+    var hasMigrations = db.Database.GetMigrations().Any();
+    if (hasMigrations)
+    {
+        await db.Database.MigrateAsync();
+    }
+    else
+    {
+        // Sem migrations no projeto: garante schema consistente para seed em ambiente dev.
+        await db.Database.EnsureDeletedAsync();
+        await db.Database.EnsureCreatedAsync();
+    }
+
     await DevDataSeeder.EnsureOfficialEventSeedAsync(db, redis);
 
     app.UseSwagger();
@@ -97,6 +109,7 @@ app.UseAuthorization();
 
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.MapGeocacheEndpoints();
+app.MapAdminRoteiroEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "scout-cache-api" }))
    .WithTags("Health")

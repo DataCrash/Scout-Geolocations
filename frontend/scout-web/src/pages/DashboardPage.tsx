@@ -7,7 +7,15 @@ import {
   type ChallengeItem,
 } from "@/services/adminChallengesApi";
 import { validateChallenge } from "@/services/challengeApi";
+import {
+  analyzePhotoLocally,
+  type PhotoInferenceResult,
+} from "@/services/photoInference";
 import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
+import {
+  analyzePhotoWithVisionApi,
+  type VisionAnalysisResponse,
+} from "@/services/visionApi";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import L from "leaflet";
@@ -77,6 +85,11 @@ export default function DashboardPage() {
   const [isCameraLoading, setIsCameraLoading] = useState(false);
   const [cameraMessage, setCameraMessage] = useState<string>("");
   const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [photoInference, setPhotoInference] =
+    useState<PhotoInferenceResult | null>(null);
+  const [backendVisionResult, setBackendVisionResult] =
+    useState<VisionAnalysisResponse | null>(null);
+  const [isBackendVisionLoading, setIsBackendVisionLoading] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -298,7 +311,7 @@ export default function DashboardPage() {
     setIsCameraOpen(false);
   }
 
-  function handleTakePhoto() {
+  async function handleTakePhoto() {
     if (!videoRef.current || !canvasRef.current) {
       return;
     }
@@ -323,10 +336,51 @@ export default function DashboardPage() {
     }
 
     context.drawImage(video, 0, 0, width, height);
-    setPhotoPreview(canvas.toDataURL("image/jpeg", 0.85));
-    setCameraMessage(
-      "Foto capturada. Próximo passo: enviar para validação de IA.",
-    );
+    const capturedPhoto = canvas.toDataURL("image/jpeg", 0.85);
+    setPhotoPreview(capturedPhoto);
+
+    try {
+      const inference = await analyzePhotoLocally(capturedPhoto);
+      setPhotoInference(inference);
+      setBackendVisionResult(null);
+      setCameraMessage(
+        inference.requiresBackendFallback
+          ? `Inferência local inconclusiva (${Math.round(inference.confidence * 100)}%). Próximo passo: fallback backend.`
+          : `Inferência local: ${inference.label} (${Math.round(inference.confidence * 100)}% de confiança).`,
+      );
+    } catch {
+      setPhotoInference(null);
+      setBackendVisionResult(null);
+      setCameraMessage(
+        "Foto capturada, mas a inferência local falhou. Próximo passo: fallback backend.",
+      );
+    }
+  }
+
+  async function handleAnalyzePhotoFallback() {
+    if (!photoPreview) {
+      setCameraMessage("Capture uma foto antes de chamar o fallback backend.");
+      return;
+    }
+
+    setIsBackendVisionLoading(true);
+
+    try {
+      const result = await analyzePhotoWithVisionApi(photoPreview);
+      setBackendVisionResult(result);
+      setCameraMessage(
+        `${result.summary} (${Math.round(result.confidence * 100)}% de confiança).`,
+      );
+    } catch (error) {
+      setBackendVisionResult(null);
+      setCameraMessage(
+        error instanceof Error
+          ? error.message
+          : "Falha ao executar fallback backend.",
+      );
+    } finally {
+      setIsBackendVisionLoading(false);
+    }
   }
 
   async function handleValidateCheckin() {
@@ -529,6 +583,15 @@ export default function DashboardPage() {
               >
                 Fechar câmera
               </Button>
+              <Button
+                variant="ghost"
+                onClick={handleAnalyzePhotoFallback}
+                disabled={!photoPreview || isBackendVisionLoading}
+              >
+                {isBackendVisionLoading
+                  ? "Chamando fallback backend..."
+                  : "Executar fallback backend"}
+              </Button>
             </div>
 
             {isCameraOpen && (
@@ -549,6 +612,43 @@ export default function DashboardPage() {
                   alt="Prévia da foto capturada"
                   className="h-auto w-full"
                 />
+              </div>
+            )}
+
+            {photoInference && (
+              <div className="mt-3 rounded-xl border border-border/70 bg-white p-3 text-sm text-muted-foreground">
+                <p>
+                  Motor local: <strong>{photoInference.engine}</strong>
+                </p>
+                <p>
+                  Rótulo estimado: <strong>{photoInference.label}</strong>
+                </p>
+                <p>
+                  Confiança: <strong>{Math.round(photoInference.confidence * 100)}%</strong>
+                </p>
+                <p>
+                  Contraste: <strong>{photoInference.contrast.toFixed(3)}</strong>
+                </p>
+                <p>
+                  Decisão: <strong>{photoInference.requiresBackendFallback ? "encaminhar para fallback backend" : "classificação local suficiente para triagem"}</strong>
+                </p>
+              </div>
+            )}
+
+            {backendVisionResult && (
+              <div className="mt-3 rounded-xl border border-border/70 bg-white p-3 text-sm text-muted-foreground">
+                <p>
+                  Motor backend: <strong>{backendVisionResult.engine}</strong>
+                </p>
+                <p>
+                  Rótulo backend: <strong>{backendVisionResult.label}</strong>
+                </p>
+                <p>
+                  Confiança backend: <strong>{Math.round(backendVisionResult.confidence * 100)}%</strong>
+                </p>
+                <p>
+                  Revisão manual: <strong>{backendVisionResult.requiresManualReview ? "necessária" : "dispensada na triagem"}</strong>
+                </p>
               </div>
             )}
 

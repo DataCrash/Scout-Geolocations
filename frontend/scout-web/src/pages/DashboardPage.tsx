@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useNfc } from "@/hooks/useNfc";
 import {
   createChallenge,
   deleteChallenge,
@@ -7,11 +8,16 @@ import {
   type ChallengeItem,
 } from "@/services/adminChallengesApi";
 import { validateChallenge } from "@/services/challengeApi";
+import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
+import {
+  enqueueCheckinSubmission,
+  flushCheckinQueue,
+  getQueuedCheckinsCount,
+} from "@/services/offlineCheckinQueue";
 import {
   analyzePhotoLocally,
   type PhotoInferenceResult,
 } from "@/services/photoInference";
-import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
 import {
   analyzePhotoWithVisionApi,
   type VisionAnalysisResponse,
@@ -90,6 +96,14 @@ export default function DashboardPage() {
   const [backendVisionResult, setBackendVisionResult] =
     useState<VisionAnalysisResponse | null>(null);
   const [isBackendVisionLoading, setIsBackendVisionLoading] = useState(false);
+  const {
+    isSupported: isNfcSupported,
+    isScanning: isNfcScanning,
+    lastPayload: nfcPayload,
+    error: nfcError,
+    startScan: startNfcScan,
+    stopScan: stopNfcScan,
+  } = useNfc();
 
   const handleLogout = () => {
     logout();
@@ -174,6 +188,56 @@ export default function DashboardPage() {
 
       stream.getTracks().forEach((track) => track.stop());
       cameraStreamRef.current = null;
+      stopNfcScan();
+    };
+  }, [stopNfcScan]);
+
+  useEffect(() => {
+    if (!nfcPayload) {
+      return;
+    }
+
+    setQrCode(nfcPayload);
+    setCheckinMessage(`Tag NFC lida com sucesso: ${nfcPayload}`);
+  }, [nfcPayload]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function syncOfflineQueue() {
+      if (!navigator.onLine) {
+        return;
+      }
+
+      try {
+        const result = await flushCheckinQueue(validateChallenge);
+        if (!active || result.synced <= 0) {
+          return;
+        }
+
+        setCheckinMessage(
+          `Sincronização offline concluída: ${result.synced} submissão(ões) enviada(s).`,
+        );
+      } catch {
+        if (active) {
+          setCheckinMessage(
+            "Falha ao sincronizar fila offline. Tentaremos novamente ao reconectar.",
+          );
+        }
+      }
+    }
+
+    void syncOfflineQueue();
+
+    const handleOnline = () => {
+      void syncOfflineQueue();
+    };
+
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      active = false;
+      window.removeEventListener("online", handleOnline);
     };
   }, []);
 
@@ -387,15 +451,17 @@ export default function DashboardPage() {
     setIsSubmitting(true);
     setCheckinMessage("");
 
+    const payload = {
+      PatrulhaId: patrulhaId,
+      UserId: userId,
+      ScannedQrCode: qrCode || undefined,
+      Latitude: latitude ? Number(latitude) : undefined,
+      Longitude: longitude ? Number(longitude) : undefined,
+      PhotoBase64: photoPreview || undefined,
+    };
+
     try {
-      const result = await validateChallenge(challengeId, {
-        PatrulhaId: patrulhaId,
-        UserId: userId,
-        ScannedQrCode: qrCode || undefined,
-        Latitude: latitude ? Number(latitude) : undefined,
-        Longitude: longitude ? Number(longitude) : undefined,
-        PhotoBase64: photoPreview || undefined,
-      });
+      const result = await validateChallenge(challengeId, payload);
 
       if (result.status === 1) {
         setCheckinMessage(
@@ -412,6 +478,28 @@ export default function DashboardPage() {
         );
       }
     } catch (error) {
+      const isNetworkError =
+        !navigator.onLine ||
+        (error instanceof TypeError &&
+          /fetch|network|failed/i.test(error.message));
+
+      if (isNetworkError) {
+        try {
+          await enqueueCheckinSubmission(challengeId, payload);
+          const queueSize = await getQueuedCheckinsCount();
+
+          setCheckinMessage(
+            `Sem conexão. Check-in salvo na fila offline (${queueSize} pendente(s)).`,
+          );
+          return;
+        } catch {
+          setCheckinMessage(
+            "Sem conexão e não foi possível salvar na fila offline.",
+          );
+          return;
+        }
+      }
+
       setCheckinMessage(
         error instanceof Error ? error.message : "Erro no check-in.",
       );
@@ -547,10 +635,28 @@ export default function DashboardPage() {
                   ? "Capturando localização..."
                   : "Usar minha localização"}
               </Button>
+              {isNfcSupported ? (
+                <Button
+                  variant="ghost"
+                  onClick={isNfcScanning ? stopNfcScan : startNfcScan}
+                >
+                  {isNfcScanning
+                    ? "Parar leitura NFC"
+                    : "Ler tag NFC (fallback do QR)"}
+                </Button>
+              ) : (
+                <span className="inline-flex items-center rounded-xl border border-border/70 bg-white px-3 py-2 text-xs text-muted-foreground">
+                  WebNFC indisponível neste dispositivo. Use QR manual.
+                </span>
+              )}
               <Button onClick={handleValidateCheckin} disabled={isSubmitting}>
                 {isSubmitting ? "Validando..." : "Validar check-in"}
               </Button>
             </div>
+
+            {nfcError && (
+              <p className="mt-3 text-sm text-amber-700">{nfcError}</p>
+            )}
 
             {checkinMessage && (
               <p className="mt-3 text-sm text-muted-foreground">
@@ -624,13 +730,22 @@ export default function DashboardPage() {
                   Rótulo estimado: <strong>{photoInference.label}</strong>
                 </p>
                 <p>
-                  Confiança: <strong>{Math.round(photoInference.confidence * 100)}%</strong>
+                  Confiança:{" "}
+                  <strong>
+                    {Math.round(photoInference.confidence * 100)}%
+                  </strong>
                 </p>
                 <p>
-                  Contraste: <strong>{photoInference.contrast.toFixed(3)}</strong>
+                  Contraste:{" "}
+                  <strong>{photoInference.contrast.toFixed(3)}</strong>
                 </p>
                 <p>
-                  Decisão: <strong>{photoInference.requiresBackendFallback ? "encaminhar para fallback backend" : "classificação local suficiente para triagem"}</strong>
+                  Decisão:{" "}
+                  <strong>
+                    {photoInference.requiresBackendFallback
+                      ? "encaminhar para fallback backend"
+                      : "classificação local suficiente para triagem"}
+                  </strong>
                 </p>
               </div>
             )}
@@ -644,10 +759,18 @@ export default function DashboardPage() {
                   Rótulo backend: <strong>{backendVisionResult.label}</strong>
                 </p>
                 <p>
-                  Confiança backend: <strong>{Math.round(backendVisionResult.confidence * 100)}%</strong>
+                  Confiança backend:{" "}
+                  <strong>
+                    {Math.round(backendVisionResult.confidence * 100)}%
+                  </strong>
                 </p>
                 <p>
-                  Revisão manual: <strong>{backendVisionResult.requiresManualReview ? "necessária" : "dispensada na triagem"}</strong>
+                  Revisão manual:{" "}
+                  <strong>
+                    {backendVisionResult.requiresManualReview
+                      ? "necessária"
+                      : "dispensada na triagem"}
+                  </strong>
                 </p>
               </div>
             )}

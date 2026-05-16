@@ -158,13 +158,20 @@
 - [x] Vision Service backend criado com endpoint
       `/api/vision/analyze-photo`, fallback heurístico e caminho de
       inferência ONNX real quando modelo e labels são configurados.
+- [x] E2E real adicionado para fluxo `PhotoChallenge` cobrindo criação
+      admin, validação com `PhotoBase64` e retorno `Pending`.
+- [x] E2E real adicionado para `Vision API` cobrindo autenticação e
+      análise de foto (`/api/vision/analyze-photo`).
+- [x] E2E frontend real adicionado para fluxo ponta a ponta de foto no
+      Dashboard (câmera simulada, inferência local, fallback backend e
+      validação `Pending`).
 
 ### Critérios de aceite
 
-- [ ] Câmera ativada no cliente com captura de foto para desafio.
-- [ ] Modelo básico de classificação integrado (TensorFlow.js no cliente).
-- [ ] Fallback para validação manual quando confiança da inferência for baixa.
-- [ ] Vision Service no backend com ONNX Runtime como opção de fallback do modelo.
+- [x] Câmera ativada no cliente com captura de foto para desafio.
+- [x] Modelo básico de classificação integrado (TensorFlow.js no cliente).
+- [x] Fallback para validação manual quando confiança da inferência for baixa.
+- [x] Vision Service no backend com ONNX Runtime como opção de fallback do modelo.
 
 ### Entregas técnicas
 
@@ -191,6 +198,14 @@
 - Hook `useNFC` com fallback graciosa para QR.
 - Service Worker + IndexedDB para fila offline.
 - Sincronização de submissões pendentes ao reconectar.
+
+### Status incremental atual (May 16, 2026)
+
+- [x] Fila offline de check-ins implementada no frontend com IndexedDB.
+- [x] Sincronização automática de submissões pendentes ao reconectar.
+- [x] Service Worker inicial implementado com cache de app shell e estratégia runtime para navegação/assets.
+- [x] Slice inicial de WebNFC implementado no Dashboard com leitura de tag e fallback explícito para QR manual.
+- [x] Cobertura E2E adicionada para fallback WebNFC -> QR no frontend.
 
 ---
 

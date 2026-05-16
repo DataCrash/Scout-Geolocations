@@ -190,7 +190,7 @@
 ### Critérios de aceite
 
 - [ ] WebNFC funcionando em dispositivos compatíveis como alternativa ao QR.
-- [ ] Service Worker capturando submissões offline e sincronizando ao reconectar.
+- [x] Service Worker capturando submissões offline e sincronizando ao reconectar.
 - [ ] Vínculo de Patrulha por NFC avaliado e documentado (POC ou decisão de pendência).
 
 ### Entregas técnicas
@@ -207,6 +207,7 @@
 - [x] Slice inicial de WebNFC implementado no Dashboard com leitura de tag e fallback explícito para QR manual.
 - [x] Cobertura E2E adicionada para fallback WebNFC -> QR no frontend.
 - [x] POC de vínculo de Patrulha por NFC implementada via payload estruturado (`patrol=<uuid>;qr=<code>`) com cobertura E2E dedicada.
+- [x] Service Worker expandido para capturar `POST /api/challenges/{id}/validate` offline, enfileirar e reenviar automaticamente ao reconectar.
 
 ---
 

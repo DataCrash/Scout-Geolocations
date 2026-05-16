@@ -160,6 +160,8 @@
       inferência ONNX real quando modelo e labels são configurados.
 - [x] E2E real adicionado para fluxo `PhotoChallenge` cobrindo criação
       admin, validação com `PhotoBase64` e retorno `Pending`.
+- [x] E2E real adicionado para `Vision API` cobrindo autenticação e
+      análise de foto (`/api/vision/analyze-photo`).
 
 ### Critérios de aceite
 

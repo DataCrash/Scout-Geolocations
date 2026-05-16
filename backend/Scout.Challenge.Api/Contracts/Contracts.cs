@@ -32,7 +32,8 @@ public record ValidateChallengeRequest(
     Guid UserId,
     string? ScannedQrCode,
     double? Latitude,
-    double? Longitude);
+    double? Longitude,
+    string? PhotoBase64);
 
 // ── Responses ─────────────────────────────────────────────────────────────────
 

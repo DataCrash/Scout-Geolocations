@@ -325,6 +325,7 @@ export default function DashboardPage() {
         ScannedQrCode: qrCode || undefined,
         Latitude: latitude ? Number(latitude) : undefined,
         Longitude: longitude ? Number(longitude) : undefined,
+        PhotoBase64: photoPreview || undefined,
       });
 
       if (result.status === 1) {

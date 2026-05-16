@@ -147,12 +147,13 @@ public class ChallengeService(ChallengeDbContext db, IMediator mediator, ILogger
             await db.SaveChangesAsync(ct);
 
             logger.LogInformation(
-                "AUDIT checkin.pending_manual attemptId={AttemptId} challengeId={ChallengeId} patrulhaId={PatrulhaId} userId={UserId} challengeType={ChallengeType}",
+                "AUDIT checkin.pending_manual attemptId={AttemptId} challengeId={ChallengeId} patrulhaId={PatrulhaId} userId={UserId} challengeType={ChallengeType} hasPhotoEvidence={HasPhotoEvidence}",
                 attempt.Id,
                 challengeId,
                 req.PatrulhaId,
                 req.UserId,
-                challenge.Type);
+                challenge.Type,
+                !string.IsNullOrWhiteSpace(req.PhotoBase64));
 
             return MapAttemptResponse(attempt);
         }

@@ -3,14 +3,13 @@ import { randomUUID } from "node:crypto";
 import {
   authHeader,
   challengeApiUrl,
-  type ChallengeResponse,
   createRoleToken,
   probeChallengeAuthStatus,
   runRealBackend,
   runRealBackendSkipMessage,
   seedEventId,
   serviceUnavailableMessage,
-  type AttemptResponse,
+  type ChallengeResponse,
 } from "./support/real-backend.helpers.js";
 
 test.describe("frontend real: photo challenge ponta a ponta", () => {
@@ -109,9 +108,12 @@ test.describe("frontend real: photo challenge ponta a ponta", () => {
           };
 
           const mediaDevices = navigator.mediaDevices ?? ({} as MediaDevices);
-          const originalGetUserMedia = mediaDevices.getUserMedia?.bind(mediaDevices);
+          const originalGetUserMedia =
+            mediaDevices.getUserMedia?.bind(mediaDevices);
 
-          mediaDevices.getUserMedia = async (constraints?: MediaStreamConstraints) => {
+          mediaDevices.getUserMedia = async (
+            constraints?: MediaStreamConstraints,
+          ) => {
             if (constraints?.video) {
               return fakeStream();
             }
@@ -144,7 +146,9 @@ test.describe("frontend real: photo challenge ponta a ponta", () => {
       await expect(page.getByAltText("Prévia da foto capturada")).toBeVisible();
       await expect(page.getByText(/Motor local:/i)).toBeVisible();
 
-      await page.getByRole("button", { name: "Executar fallback backend" }).click();
+      await page
+        .getByRole("button", { name: "Executar fallback backend" })
+        .click();
       await expect(page.getByText(/Motor backend:/i)).toBeVisible();
 
       await page.getByRole("button", { name: "Validar check-in" }).click();

@@ -27,16 +27,21 @@ test.describe("vision api real: analise de foto", () => {
     memberToken = createRoleToken("Integrante");
   });
 
-  test("retorna analise autenticada para imagem base64", async ({ request }) => {
-    const response = await request.post(`${visionApiUrl}/api/vision/analyze-photo`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeader(memberToken),
+  test("retorna analise autenticada para imagem base64", async ({
+    request,
+  }) => {
+    const response = await request.post(
+      `${visionApiUrl}/api/vision/analyze-photo`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(memberToken),
+        },
+        data: {
+          photoBase64: tinyPhotoDataUrl,
+        },
       },
-      data: {
-        photoBase64: tinyPhotoDataUrl,
-      },
-    });
+    );
 
     expect(response.ok()).toBeTruthy();
 
@@ -63,14 +68,17 @@ test.describe("vision api real: analise de foto", () => {
   });
 
   test("bloqueia requisicao sem token", async ({ request }) => {
-    const response = await request.post(`${visionApiUrl}/api/vision/analyze-photo`, {
-      headers: {
-        "Content-Type": "application/json",
+    const response = await request.post(
+      `${visionApiUrl}/api/vision/analyze-photo`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: {
+          photoBase64: tinyPhotoDataUrl,
+        },
       },
-      data: {
-        photoBase64: tinyPhotoDataUrl,
-      },
-    });
+    );
 
     expect(response.status()).toBe(401);
   });

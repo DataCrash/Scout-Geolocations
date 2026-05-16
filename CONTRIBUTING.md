@@ -2,7 +2,8 @@
 
 Obrigado por contribuir com este boilerplate.
 
-Este repositório foi desenhado para iniciar projetos orientados por IA com clareza de processo, rastreabilidade e evolução incremental.
+Este repositório foi desenhado para iniciar projetos orientados por IA com
+clareza de processo, rastreabilidade e evolução incremental.
 
 ## Derivando um novo projeto a partir deste boilerplate
 
@@ -56,6 +57,8 @@ As regras abaixo sao obrigatorias para este repositório:
    - apos merge em `master`, abrir PR `master` -> `develop`.
 8. Quando o agente IA for o unico implementador ativo, ele pode abrir/aprovar/taguear PRs,
    mas deve manter 100% do fluxo acima para preservar historico e rastreabilidade.
+9. Branches `feature/*`, `bugfix/*`, `hotfix/*` e `release/*` sao removidas automaticamente
+   apos merge do PR quando a branch pertence a este mesmo repositório.
 
 ## Convenção de branch
 

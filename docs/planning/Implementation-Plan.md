@@ -156,8 +156,8 @@
 - [x] Payload de validação já aceita evidência fotográfica opcional (`PhotoBase64`) para evolução da inferência.
 - [x] Inferência local baseline integrada com TensorFlow.js no cliente para triagem inicial da foto.
 - [x] Vision Service backend criado com endpoint
-      `/api/vision/analyze-photo`, fallback heurístico e configuração
-      pronta para evolução com ONNX Runtime.
+      `/api/vision/analyze-photo`, fallback heurístico e caminho de
+      inferência ONNX real quando modelo e labels são configurados.
 
 ### Critérios de aceite
 

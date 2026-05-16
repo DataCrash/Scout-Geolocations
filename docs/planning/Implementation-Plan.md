@@ -168,10 +168,10 @@
 
 ### Critérios de aceite
 
-- [ ] Câmera ativada no cliente com captura de foto para desafio.
-- [ ] Modelo básico de classificação integrado (TensorFlow.js no cliente).
-- [ ] Fallback para validação manual quando confiança da inferência for baixa.
-- [ ] Vision Service no backend com ONNX Runtime como opção de fallback do modelo.
+- [x] Câmera ativada no cliente com captura de foto para desafio.
+- [x] Modelo básico de classificação integrado (TensorFlow.js no cliente).
+- [x] Fallback para validação manual quando confiança da inferência for baixa.
+- [x] Vision Service no backend com ONNX Runtime como opção de fallback do modelo.
 
 ### Entregas técnicas
 

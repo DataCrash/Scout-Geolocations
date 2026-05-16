@@ -169,6 +169,22 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  vision-api:
+    build:
+      context: ../backend/Scout.Vision.Api
+      dockerfile: Dockerfile
+    container_name: scout-vision-api
+    ports:
+      - "5005:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=scout-geolocations
+      - Jwt__Audience=scout-geolocations-client
+      - Vision__Onnx__Enabled=false
+      - Vision__Onnx__ModelPath=
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   challenge_postgres_data:

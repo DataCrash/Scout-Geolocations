@@ -18,6 +18,7 @@ import {
   analyzePhotoLocally,
   type PhotoInferenceResult,
 } from "@/services/photoInference";
+import { parseNfcPayload } from "@/services/nfcPayload";
 import {
   analyzePhotoWithVisionApi,
   type VisionAnalysisResponse,
@@ -197,8 +198,28 @@ export default function DashboardPage() {
       return;
     }
 
-    setQrCode(nfcPayload);
-    setCheckinMessage(`Tag NFC lida com sucesso: ${nfcPayload}`);
+    const parsed = parseNfcPayload(nfcPayload);
+
+    if (parsed.patrulhaId) {
+      setPatrulhaId(parsed.patrulhaId);
+    }
+
+    if (parsed.checkinCode) {
+      setQrCode(parsed.checkinCode);
+    }
+
+    const details = [
+      parsed.patrulhaId ? `Patrulha: ${parsed.patrulhaId}` : null,
+      parsed.checkinCode ? `QR/Code: ${parsed.checkinCode}` : null,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+
+    setCheckinMessage(
+      details
+        ? `Tag NFC lida com sucesso. ${details}`
+        : `Tag NFC lida com sucesso: ${parsed.raw}`,
+    );
   }, [nfcPayload]);
 
   useEffect(() => {

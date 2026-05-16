@@ -206,6 +206,7 @@
 - [x] Service Worker inicial implementado com cache de app shell e estratégia runtime para navegação/assets.
 - [x] Slice inicial de WebNFC implementado no Dashboard com leitura de tag e fallback explícito para QR manual.
 - [x] Cobertura E2E adicionada para fallback WebNFC -> QR no frontend.
+- [x] POC de vínculo de Patrulha por NFC implementada via payload estruturado (`patrol=<uuid>;qr=<code>`) com cobertura E2E dedicada.
 
 ---
 

@@ -11,7 +11,14 @@ import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import L from "leaflet";
-import { Camera, Compass, LogOut, QrCode, ShieldCheck, Trophy } from "lucide-react";
+import {
+  Camera,
+  Compass,
+  LogOut,
+  QrCode,
+  ShieldCheck,
+  Trophy,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -302,7 +309,9 @@ export default function DashboardPage() {
 
     context.drawImage(video, 0, 0, width, height);
     setPhotoPreview(canvas.toDataURL("image/jpeg", 0.85));
-    setCameraMessage("Foto capturada. Próximo passo: enviar para validação de IA.");
+    setCameraMessage(
+      "Foto capturada. Próximo passo: enviar para validação de IA.",
+    );
   }
 
   async function handleValidateCheckin() {
@@ -489,10 +498,7 @@ export default function DashboardPage() {
               >
                 {isCameraLoading ? "Abrindo câmera..." : "Abrir câmera"}
               </Button>
-              <Button
-                onClick={handleTakePhoto}
-                disabled={!isCameraOpen}
-              >
+              <Button onClick={handleTakePhoto} disabled={!isCameraOpen}>
                 Capturar foto
               </Button>
               <Button
@@ -506,7 +512,12 @@ export default function DashboardPage() {
 
             {isCameraOpen && (
               <div className="mt-3 overflow-hidden rounded-xl border border-border/70 bg-black/80">
-                <video ref={videoRef} className="h-auto w-full" playsInline muted />
+                <video
+                  ref={videoRef}
+                  className="h-auto w-full"
+                  playsInline
+                  muted
+                />
               </div>
             )}
 
@@ -523,7 +534,9 @@ export default function DashboardPage() {
             <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
 
             {cameraMessage && (
-              <p className="mt-3 text-sm text-muted-foreground">{cameraMessage}</p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {cameraMessage}
+              </p>
             )}
           </div>
         </section>

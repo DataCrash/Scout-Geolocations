@@ -204,7 +204,7 @@
 - [x] Fila offline de check-ins implementada no frontend com IndexedDB.
 - [x] Sincronização automática de submissões pendentes ao reconectar.
 - [x] Service Worker inicial implementado com cache de app shell e estratégia runtime para navegação/assets.
-- [ ] Slice inicial de WebNFC com fallback para QR.
+- [x] Slice inicial de WebNFC implementado no Dashboard com leitura de tag e fallback explícito para QR manual.
 
 ---
 

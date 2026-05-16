@@ -11,7 +11,7 @@ import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import L from "leaflet";
-import { Compass, LogOut, QrCode, ShieldCheck, Trophy } from "lucide-react";
+import { Camera, Compass, LogOut, QrCode, ShieldCheck, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +23,9 @@ export default function DashboardPage() {
   const { eventId, scores, bumpPatrol, applyRealtimeUpdate, lastRealtimeAt } =
     useLeaderboardStore();
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const [challengeId, setChallengeId] = useState(
     "00000000-0000-0000-0000-000000000010",
@@ -48,6 +51,10 @@ export default function DashboardPage() {
   const [adminQr, setAdminQr] = useState("QR-DEMO-001");
   const [adminMessage, setAdminMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
+  const [cameraMessage, setCameraMessage] = useState<string>("");
+  const [photoPreview, setPhotoPreview] = useState<string>("");
 
   const handleLogout = () => {
     logout();
@@ -122,6 +129,18 @@ export default function DashboardPage() {
       void stop?.();
     };
   }, [applyRealtimeUpdate, eventId]);
+
+  useEffect(() => {
+    return () => {
+      const stream = cameraStreamRef.current;
+      if (!stream) {
+        return;
+      }
+
+      stream.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    };
+  }, []);
 
   async function refreshAdminChallenges() {
     setIsAdminLoading(true);
@@ -213,6 +232,77 @@ export default function DashboardPage() {
         timeout: 8000,
       },
     );
+  }
+
+  async function handleOpenCamera() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraMessage("Câmera não suportada neste navegador.");
+      return;
+    }
+
+    setIsCameraLoading(true);
+    setCameraMessage("");
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+        },
+        audio: false,
+      });
+
+      cameraStreamRef.current = stream;
+      setIsCameraOpen(true);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch {
+      setCameraMessage("Não foi possível acessar a câmera.");
+      setIsCameraOpen(false);
+    } finally {
+      setIsCameraLoading(false);
+    }
+  }
+
+  function handleCloseCamera() {
+    const stream = cameraStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    cameraStreamRef.current = null;
+    setIsCameraOpen(false);
+  }
+
+  function handleTakePhoto() {
+    if (!videoRef.current || !canvasRef.current) {
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (!width || !height) {
+      setCameraMessage("A câmera ainda não está pronta para captura.");
+      return;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setCameraMessage("Falha ao preparar captura da imagem.");
+      return;
+    }
+
+    context.drawImage(video, 0, 0, width, height);
+    setPhotoPreview(canvas.toDataURL("image/jpeg", 0.85));
+    setCameraMessage("Foto capturada. Próximo passo: enviar para validação de IA.");
   }
 
   async function handleValidateCheckin() {
@@ -382,6 +472,58 @@ export default function DashboardPage() {
               <p className="mt-3 text-sm text-muted-foreground">
                 {checkinMessage}
               </p>
+            )}
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-border/70 bg-white/70 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Camera className="h-4 w-4" />
+              Photo Challenge (M2 preview)
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="ghost"
+                onClick={handleOpenCamera}
+                disabled={isCameraLoading || isCameraOpen}
+              >
+                {isCameraLoading ? "Abrindo câmera..." : "Abrir câmera"}
+              </Button>
+              <Button
+                onClick={handleTakePhoto}
+                disabled={!isCameraOpen}
+              >
+                Capturar foto
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleCloseCamera}
+                disabled={!isCameraOpen}
+              >
+                Fechar câmera
+              </Button>
+            </div>
+
+            {isCameraOpen && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-border/70 bg-black/80">
+                <video ref={videoRef} className="h-auto w-full" playsInline muted />
+              </div>
+            )}
+
+            {photoPreview && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-border/70 bg-white">
+                <img
+                  src={photoPreview}
+                  alt="Prévia da foto capturada"
+                  className="h-auto w-full"
+                />
+              </div>
+            )}
+
+            <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
+
+            {cameraMessage && (
+              <p className="mt-3 text-sm text-muted-foreground">{cameraMessage}</p>
             )}
           </div>
         </section>

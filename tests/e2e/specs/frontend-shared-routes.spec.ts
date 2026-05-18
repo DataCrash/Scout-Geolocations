@@ -23,7 +23,9 @@ test.describe("frontend M4: rotas compartilhadas", () => {
 
     await page.goto("/");
 
-    await expect(page.getByText(/Rotas compartilhadas/i)).toBeVisible();
+    await expect(
+      page.getByText("Rotas compartilhadas", { exact: true }),
+    ).toBeVisible();
 
     await page.getByPlaceholder("Nome da rota").fill("Rota do Mirante");
     await page

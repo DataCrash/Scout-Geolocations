@@ -41,8 +41,8 @@ import {
   QrCode,
   Share2,
   ShieldCheck,
-  User,
   Trophy,
+  User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -108,7 +108,9 @@ export default function DashboardPage() {
   );
   const [routeMessage, setRouteMessage] = useState<string>("");
   const [profileName, setProfileName] = useState("Patrulha Lobo");
-  const [profileBio, setProfileBio] = useState("Especialistas em orientação e trilha.");
+  const [profileBio, setProfileBio] = useState(
+    "Especialistas em orientação e trilha.",
+  );
   const [profileFocus, setProfileFocus] = useState("Navegação e estratégia");
   const [profileMessage, setProfileMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
@@ -262,6 +264,16 @@ export default function DashboardPage() {
     .slice(0, 5);
   const activePatrolProfile = byPatrolId[patrulhaId];
   const sharedRoutes = routesByEventId[eventId] ?? [];
+  const activePatrolScore =
+    scores.find((score) => score.id === patrulhaId) ?? null;
+  const patrolPosition = activePatrolScore
+    ? scores.findIndex((score) => score.id === patrulhaId) + 1
+    : null;
+  const socialProfileName =
+    activePatrolProfile?.displayName ??
+    activePatrolScore?.name ??
+    "Patrulha sem identificação";
+  const latestEventSnapshot = eventHistory[0];
 
   const bestPoints = scores.length
     ? Math.max(...scores.map((score) => score.points))
@@ -1124,13 +1136,49 @@ export default function DashboardPage() {
                 className="mt-3 rounded-xl border border-border bg-white p-3"
                 aria-label="perfil-patrulha-resumo"
               >
-                <p className="text-sm font-semibold">{activePatrolProfile.displayName}</p>
-                <p className="text-xs text-muted-foreground">{activePatrolProfile.bio}</p>
+                <p className="text-sm font-semibold">
+                  {activePatrolProfile.displayName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {activePatrolProfile.bio}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Foco: {activePatrolProfile.focus}
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Trophy className="h-4 w-4" />
+              Resumo social da Patrulha
+            </div>
+
+            <div
+              className="rounded-xl border border-border bg-white p-3"
+              aria-label="resumo-social-patrulha"
+            >
+              <p className="text-sm font-semibold">{socialProfileName}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Posição no ranking: {patrolPosition ? `${patrolPosition}º` : "-"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pontos atuais: {activePatrolScore?.points ?? 0}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Desafios validados: {activePatrolScore?.validatedChallenges ?? 0}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Badges desbloqueadas: {unlockedBadgeIds.length}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Rotas compartilhadas no evento: {sharedRoutes.length}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Último snapshot de evento: {latestEventSnapshot ? latestEventSnapshot.eventId.slice(0, 8) : "indisponível"}
+              </p>
+            </div>
           </div>
 
           <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">

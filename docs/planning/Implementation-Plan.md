@@ -212,6 +212,7 @@
 - [x] Histórico local de leaderboard entre eventos adicionado no Dashboard com persistência por `eventId` e cobertura E2E.
 - [x] Compartilhamento local de rotas personalizadas adicionado no Dashboard com persistência por evento e cobertura E2E.
 - [x] Perfil local de Patrulha adicionado no Dashboard com edição/persistência e cobertura E2E.
+- [x] Resumo social consolidado da Patrulha adicionado no Dashboard (ranking, badges, rotas e snapshot) com cobertura E2E.
 
 ---
 

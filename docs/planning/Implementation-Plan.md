@@ -227,6 +227,7 @@
 - [x] Conexão realtime do leaderboard atualizada para usar token do `auth-store` (remoção da dependência de `access_token` legado em localStorage).
 - [x] Fila offline de check-ins protegida com schema Zod (enqueue/flush), incluindo saneamento de itens inválidos e cobertura E2E de fallback em erro de rede.
 - [x] Callback OAuth do frontend agora valida parâmetros com schema de autenticação (role incluída), com cobertura E2E para sucesso e cenários inválidos.
+- [x] Resposta de `GET /auth/google/authorize` endurecida com validação de URL absoluta no schema Zod, com cobertura E2E para payload com `authorizationUrl` inválida.
 
 ---
 

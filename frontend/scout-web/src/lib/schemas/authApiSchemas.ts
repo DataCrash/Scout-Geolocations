@@ -14,7 +14,7 @@ export const authLoginResponseSchema = z.object({
 });
 
 export const oauthAuthorizeResponseSchema = z.object({
-  authorizationUrl: z.string().min(1),
+  authorizationUrl: z.string().url(),
   state: z.string().min(1),
 });
 

@@ -189,9 +189,9 @@
 
 ### Critérios de aceite
 
-- [ ] WebNFC funcionando em dispositivos compatíveis como alternativa ao QR.
+- [x] WebNFC funcionando em dispositivos compatíveis como alternativa ao QR.
 - [x] Service Worker capturando submissões offline e sincronizando ao reconectar.
-- [ ] Vínculo de Patrulha por NFC avaliado e documentado (POC ou decisão de pendência).
+- [x] Vínculo de Patrulha por NFC avaliado e documentado (POC ou decisão de pendência).
 
 ### Entregas técnicas
 

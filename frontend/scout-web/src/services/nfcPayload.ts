@@ -49,7 +49,10 @@ function parseKeyValue(raw: string): NfcPayloadResult | null {
     .filter(Boolean)
     .map((entry) => {
       const [key, ...valueParts] = entry.split("=");
-      return [key.trim().toLowerCase(), normalize(valueParts.join("="))] as const;
+      return [
+        key.trim().toLowerCase(),
+        normalize(valueParts.join("=")),
+      ] as const;
     });
 
   const map = new Map(entries);

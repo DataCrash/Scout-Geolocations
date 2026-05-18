@@ -152,65 +152,68 @@ test.describe("frontend M3: fallback WebNFC para QR", () => {
   }) => {
     const linkedPatrolId = "22222222-2222-2222-8222-222222222222";
 
-    await page.addInitScript(({ patrolId }) => {
-      localStorage.setItem(
-        "auth-store",
-        JSON.stringify({
-          state: {
-            token: "e2e-token",
-            user: {
-              id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-              name: "E2E User",
-              role: "ChefesEscoteiro",
+    await page.addInitScript(
+      ({ patrolId }) => {
+        localStorage.setItem(
+          "auth-store",
+          JSON.stringify({
+            state: {
+              token: "e2e-token",
+              user: {
+                id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                name: "E2E User",
+                role: "ChefesEscoteiro",
+              },
             },
-          },
-          version: 0,
-        }),
-      );
+            version: 0,
+          }),
+        );
 
-      class MockNDEFReader {
-        listeners: Record<string, Array<(event: unknown) => void>>;
+        class MockNDEFReader {
+          listeners: Record<string, Array<(event: unknown) => void>>;
 
-        constructor() {
-          this.listeners = { reading: [], readingerror: [] };
-        }
-
-        addEventListener(type: string, listener: (event: unknown) => void) {
-          if (!this.listeners[type]) {
-            this.listeners[type] = [];
+          constructor() {
+            this.listeners = { reading: [], readingerror: [] };
           }
 
-          this.listeners[type].push(listener);
-        }
-
-        async scan() {
-          const bytes = new TextEncoder().encode(
-            `patrol=${patrolId};qr=NFC-LINK-009`,
-          );
-          const event = {
-            message: {
-              records: [
-                {
-                  recordType: "text",
-                  data: bytes.buffer,
-                },
-              ],
-            },
-          };
-
-          setTimeout(() => {
-            for (const listener of this.listeners.reading ?? []) {
-              listener(event);
+          addEventListener(type: string, listener: (event: unknown) => void) {
+            if (!this.listeners[type]) {
+              this.listeners[type] = [];
             }
-          }, 10);
-        }
-      }
 
-      Object.defineProperty(window, "NDEFReader", {
-        value: MockNDEFReader,
-        configurable: true,
-      });
-    }, { patrolId: linkedPatrolId });
+            this.listeners[type].push(listener);
+          }
+
+          async scan() {
+            const bytes = new TextEncoder().encode(
+              `patrol=${patrolId};qr=NFC-LINK-009`,
+            );
+            const event = {
+              message: {
+                records: [
+                  {
+                    recordType: "text",
+                    data: bytes.buffer,
+                  },
+                ],
+              },
+            };
+
+            setTimeout(() => {
+              for (const listener of this.listeners.reading ?? []) {
+                listener(event);
+              }
+            }, 10);
+          }
+        }
+
+        Object.defineProperty(window, "NDEFReader", {
+          value: MockNDEFReader,
+          configurable: true,
+        });
+      },
+      { patrolId: linkedPatrolId },
+    );
 
     let requestBody: Record<string, unknown> | undefined;
 

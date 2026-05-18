@@ -86,6 +86,8 @@ test.describe("frontend vision api validation", () => {
       .getByRole("button", { name: "Executar fallback backend" })
       .click();
 
-    await expect(page.getByText(/Resposta inválida da API de visão\./i)).toBeVisible();
+    await expect(
+      page.getByText(/Resposta inválida da API de visão\./i),
+    ).toBeVisible();
   });
 });

@@ -140,7 +140,9 @@ export async function flushCheckinQueue(
     });
   }
 
-  const sorted = validItems.sort((a, b) => a.queuedAt.localeCompare(b.queuedAt));
+  const sorted = validItems.sort((a, b) =>
+    a.queuedAt.localeCompare(b.queuedAt),
+  );
 
   let synced = 0;
 

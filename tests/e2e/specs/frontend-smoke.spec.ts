@@ -175,7 +175,9 @@ test.describe("frontend MVP smoke", () => {
     ).toBeVisible();
   });
 
-  test("salva check-in na fila offline quando a rede falha", async ({ page }) => {
+  test("salva check-in na fila offline quando a rede falha", async ({
+    page,
+  }) => {
     await prepareBrowserState(page);
 
     await page.route(
@@ -191,7 +193,9 @@ test.describe("frontend MVP smoke", () => {
     await page.getByRole("button", { name: /Validar check-in/i }).click();
 
     await expect(
-      page.getByText(/Sem conexão\. Check-in salvo na fila offline \(1 pendente\(s\)\)\./i),
+      page.getByText(
+        /Sem conexão\. Check-in salvo na fila offline \(1 pendente\(s\)\)\./i,
+      ),
     ).toBeVisible();
   });
 

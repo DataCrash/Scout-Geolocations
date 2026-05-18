@@ -11,4 +11,6 @@ export const visionAnalysisResponseSchema = z.object({
   analyzedAtUtc: z.string().min(1),
 });
 
-export type VisionAnalysisResponse = z.infer<typeof visionAnalysisResponseSchema>;
+export type VisionAnalysisResponse = z.infer<
+  typeof visionAnalysisResponseSchema
+>;

@@ -1,12 +1,13 @@
+import { useAuthStore } from "@/store/useAuthStore";
+import type { LeaderboardRealtimeUpdate } from "@/store/useLeaderboardStore";
 import {
   HubConnectionBuilder,
   HubConnectionState,
   LogLevel,
 } from "@microsoft/signalr";
-import type { LeaderboardRealtimeUpdate } from "@/store/useLeaderboardStore";
-import { useAuthStore } from "@/store/useAuthStore";
 
-const API_BASE_URL = import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
+const API_BASE_URL =
+  import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
 
 export type RealtimeCallbacks = {
   onConnected?: () => void;

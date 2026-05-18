@@ -4,6 +4,7 @@ import {
   LogLevel,
 } from "@microsoft/signalr";
 import type { LeaderboardRealtimeUpdate } from "@/store/useLeaderboardStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const API_BASE_URL = import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
 
@@ -18,9 +19,11 @@ export async function connectLeaderboardRealtime(
   eventId: string,
   callbacks: RealtimeCallbacks,
 ) {
+  const accessTokenFactory = () => useAuthStore.getState().token ?? "";
+
   const connection = new HubConnectionBuilder()
     .withUrl(`${API_BASE_URL}/hubs/leaderboard`, {
-      accessTokenFactory: () => localStorage.getItem("access_token") ?? "",
+      accessTokenFactory,
     })
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Warning)

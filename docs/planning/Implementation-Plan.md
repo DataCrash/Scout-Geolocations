@@ -224,6 +224,7 @@
 - [x] Validação Zod aplicada também no payload de entrada de `validateChallenge`, com bloqueio local de request inválida e cobertura E2E dedicada.
 - [x] Parser de payload NFC agora valida resultado com Zod e mantém comportamento seguro quando `patrol` estruturado vem inválido (cobertura E2E dedicada).
 - [x] Validação Zod aplicada no fallback da Vision API com erro explícito para payload inválido e cobertura E2E dedicada.
+- [x] Conexão realtime do leaderboard atualizada para usar token do `auth-store` (remoção da dependência de `access_token` legado em localStorage).
 
 ---
 

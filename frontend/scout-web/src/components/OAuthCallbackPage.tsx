@@ -1,3 +1,4 @@
+import { authLoginResponseSchema } from "@/lib/schemas/authApiSchemas";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -28,7 +29,14 @@ export function OAuthCallbackPage() {
           return;
         }
 
-        if (!token || !userId || !name || !role) {
+        const parsed = authLoginResponseSchema.safeParse({
+          token,
+          userId,
+          name,
+          role,
+        });
+
+        if (!parsed.success) {
           setStatus("error");
           setMessage("Invalid callback parameters");
           setError("Invalid callback parameters");
@@ -37,11 +45,11 @@ export function OAuthCallbackPage() {
         }
 
         // Store credentials
-        setToken(token);
+        setToken(parsed.data.token);
         setUser({
-          id: userId,
-          name: name,
-          role: role as any,
+          id: parsed.data.userId,
+          name: parsed.data.name,
+          role: parsed.data.role,
         });
 
         setStatus("success");

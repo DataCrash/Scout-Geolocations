@@ -1,23 +1,10 @@
+import {
+  patrolSocialProfileSchema,
+  type PatrolSocialProfile,
+} from "@/lib/schemas/patrolSocialProfileSchema";
 import { authenticatedFetch } from "@/store/useAuthStore";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
-
-export type PatrolSocialProfile = {
-  id: string;
-  name: string;
-  monitorId: string;
-  monitorName: string;
-  submonitorId: string | null;
-  submonitorName: string | null;
-  createdAt: string;
-  membersCount: number;
-  recentMembers: Array<{
-    userId: string;
-    name: string;
-    role: string;
-    joinedAt: string;
-  }>;
-};
 
 export async function getPatrolSocialProfile(
   patrolId: string,
@@ -34,5 +21,12 @@ export async function getPatrolSocialProfile(
     throw new Error("Falha ao carregar perfil social da Patrulha.");
   }
 
-  return response.json();
+  const payload: unknown = await response.json();
+  const parsed = patrolSocialProfileSchema.safeParse(payload);
+
+  if (!parsed.success) {
+    return null;
+  }
+
+  return parsed.data;
 }

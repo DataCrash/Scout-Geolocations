@@ -1,3 +1,7 @@
+import {
+  challengeAttemptSchema,
+  type AttemptResponse,
+} from "@/lib/schemas/challengeAttemptSchema";
 import { getAuthHeader } from "@/store/useAuthStore";
 
 const API_BASE_URL =
@@ -10,19 +14,6 @@ export type ValidateChallengeRequest = {
   Latitude?: number;
   Longitude?: number;
   PhotoBase64?: string;
-};
-
-export type AttemptResponse = {
-  id: string;
-  challengeId: string;
-  patrulhaId: string;
-  userId: string;
-  status: number;
-  pointsAwarded: number;
-  failReason?: string;
-  distanceMeters?: number;
-  attemptedAt: string;
-  validatedAt?: string;
 };
 
 export async function validateChallenge(
@@ -57,5 +48,12 @@ export async function validateChallenge(
     throw new Error(detail);
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = challengeAttemptSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de check-in.");
+  }
+
+  return parsed.data;
 }

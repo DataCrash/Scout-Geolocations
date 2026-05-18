@@ -76,15 +76,14 @@ test.describe("frontend MVP smoke", () => {
     await prepareBrowserState(page);
     await page.goto("/");
 
-    const before = page
-      .getByText(/Patrulha Lobo/i)
-      .locator("..")
-      .locator("..");
-    await expect(before).toContainText(/120 pts/i);
+    const loboLeaderboardItem = page
+      .getByRole("heading", { level: 3, name: /Patrulha Lobo/i })
+      .locator("xpath=ancestor::li[1]");
+    await expect(loboLeaderboardItem).toContainText(/120 pts/i);
 
     await page.getByRole("button", { name: /Simular validação/i }).click();
 
-    await expect(before).toContainText(/135 pts/i);
+    await expect(loboLeaderboardItem).toContainText(/135 pts/i);
   });
 
   test("valida check-in com localizacao e resposta mockada", async ({
@@ -143,6 +142,40 @@ test.describe("frontend MVP smoke", () => {
       Latitude: -23.55052,
       Longitude: -46.63331,
     });
+  });
+
+  test("exibe erro quando resposta de check-in vem com payload inválido", async ({
+    page,
+  }) => {
+    await prepareBrowserState(page);
+
+    await page.route(
+      "http://localhost:5004/api/challenges/**/validate",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: "attempt-invalid",
+            challengeId: "00000000-0000-0000-0000-000000000010",
+            patrulhaId: "11111111-1111-1111-1111-111111111111",
+            userId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            status: 1,
+            attemptedAt: "2026-05-18T00:00:00Z",
+            validatedAt: "2026-05-18T00:00:02Z",
+          }),
+        });
+      },
+    );
+
+    await page.goto("/");
+
+    await page.getByPlaceholder("Conteúdo do QR Code").fill("QR-E2E-INVALID");
+    await page.getByRole("button", { name: /Validar check-in/i }).click();
+
+    await expect(
+      page.getByText(/Resposta inválida da API de check-in\./i),
+    ).toBeVisible();
   });
 
   test("executa CRUD admin com respostas mockadas", async ({ page }) => {

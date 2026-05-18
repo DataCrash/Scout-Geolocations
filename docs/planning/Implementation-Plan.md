@@ -214,6 +214,7 @@
 - [x] Perfil local de Patrulha adicionado no Dashboard com edição/persistência e cobertura E2E.
 - [x] Resumo social consolidado da Patrulha adicionado no Dashboard (ranking, badges, rotas e snapshot) com cobertura E2E.
 - [x] Badge customizável por evento adicionada no Dashboard, com desbloqueio dinâmico e cobertura E2E.
+- [x] Camada de Social Service local adicionada no frontend para consolidar o resumo social da Patrulha de forma reutilizável.
 
 ---
 

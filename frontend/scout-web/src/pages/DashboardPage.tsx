@@ -20,6 +20,10 @@ import {
   type PhotoInferenceResult,
 } from "@/services/photoInference";
 import {
+  buildPatrolSocialSummary,
+  type PatrolSocialSummary,
+} from "@/services/socialService";
+import {
   analyzePhotoWithVisionApi,
   type VisionAnalysisResponse,
 } from "@/services/visionApi";
@@ -279,16 +283,17 @@ export default function DashboardPage() {
   const lastSyncedAt = lastSyncedAtByEventId[eventId] ?? null;
   const activePatrolProfile = byPatrolId[patrulhaId];
   const sharedRoutes = routesByEventId[eventId] ?? [];
-  const activePatrolScore =
-    scores.find((score) => score.id === patrulhaId) ?? null;
-  const patrolPosition = activePatrolScore
-    ? scores.findIndex((score) => score.id === patrulhaId) + 1
-    : null;
-  const socialProfileName =
-    activePatrolProfile?.displayName ??
-    activePatrolScore?.name ??
-    "Patrulha sem identificação";
   const latestEventSnapshot = eventHistory[0];
+  const socialSummary: PatrolSocialSummary = buildPatrolSocialSummary({
+    patrolId: patrulhaId,
+    scores,
+    profile: activePatrolProfile
+      ? { displayName: activePatrolProfile.displayName }
+      : null,
+    unlockedBadgesCount: unlockedBadgeIds.length,
+    sharedRoutesCount: sharedRoutes.length,
+    latestEventSnapshotId: latestEventSnapshot?.eventId ?? null,
+  });
 
   const bestPoints = scores.length
     ? Math.max(...scores.map((score) => score.points))
@@ -1244,28 +1249,29 @@ export default function DashboardPage() {
               className="rounded-xl border border-border bg-white p-3"
               aria-label="resumo-social-patrulha"
             >
-              <p className="text-sm font-semibold">{socialProfileName}</p>
+              <p className="text-sm font-semibold">{socialSummary.displayName}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Posição no ranking:{" "}
-                {patrolPosition ? `${patrolPosition}º` : "-"}
+                {socialSummary.rankingPosition
+                  ? `${socialSummary.rankingPosition}º`
+                  : "-"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Pontos atuais: {activePatrolScore?.points ?? 0}
+                Pontos atuais: {socialSummary.points}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Desafios validados:{" "}
-                {activePatrolScore?.validatedChallenges ?? 0}
+                Desafios validados: {socialSummary.validatedChallenges}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Badges desbloqueadas: {unlockedBadgeIds.length}
+                Badges desbloqueadas: {socialSummary.unlockedBadgesCount}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Rotas compartilhadas no evento: {sharedRoutes.length}
+                Rotas compartilhadas no evento: {socialSummary.sharedRoutesCount}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Último snapshot de evento:{" "}
-                {latestEventSnapshot
-                  ? latestEventSnapshot.eventId.slice(0, 8)
+                {socialSummary.latestEventSnapshotId
+                  ? socialSummary.latestEventSnapshotId.slice(0, 8)
                   : "indisponível"}
               </p>
             </div>

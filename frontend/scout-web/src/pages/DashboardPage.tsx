@@ -16,6 +16,10 @@ import {
   getQueuedCheckinsCount,
 } from "@/services/offlineCheckinQueue";
 import {
+  getPatrolSocialProfile,
+  type PatrolSocialProfile,
+} from "@/services/patrolProfilesApi";
+import {
   analyzePhotoLocally,
   type PhotoInferenceResult,
 } from "@/services/photoInference";
@@ -139,6 +143,8 @@ export default function DashboardPage() {
   const [backendVisionResult, setBackendVisionResult] =
     useState<VisionAnalysisResponse | null>(null);
   const [isBackendVisionLoading, setIsBackendVisionLoading] = useState(false);
+  const [remotePatrolProfile, setRemotePatrolProfile] =
+    useState<PatrolSocialProfile | null>(null);
   const {
     isSupported: isNfcSupported,
     isScanning: isNfcScanning,
@@ -272,6 +278,29 @@ export default function DashboardPage() {
     upsertEventSnapshot(eventId, scores);
   }, [eventId, scores, upsertEventSnapshot]);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadPatrolSocialProfile() {
+      try {
+        const profile = await getPatrolSocialProfile(patrulhaId);
+        if (active) {
+          setRemotePatrolProfile(profile);
+        }
+      } catch {
+        if (active) {
+          setRemotePatrolProfile(null);
+        }
+      }
+    }
+
+    void loadPatrolSocialProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [patrulhaId]);
+
   const eventHistory = Object.values(byEventId)
     .sort(
       (a, b) =>
@@ -282,13 +311,15 @@ export default function DashboardPage() {
   const unlockedBadgeIds = unlockedBadgeIdsByEventId[eventId] ?? [];
   const lastSyncedAt = lastSyncedAtByEventId[eventId] ?? null;
   const activePatrolProfile = byPatrolId[patrulhaId];
+  const resolvedPatrolDisplayName =
+    activePatrolProfile?.displayName ?? remotePatrolProfile?.name ?? null;
   const sharedRoutes = routesByEventId[eventId] ?? [];
   const latestEventSnapshot = eventHistory[0];
   const socialSummary: PatrolSocialSummary = buildPatrolSocialSummary({
     patrolId: patrulhaId,
     scores,
-    profile: activePatrolProfile
-      ? { displayName: activePatrolProfile.displayName }
+    profile: resolvedPatrolDisplayName
+      ? { displayName: resolvedPatrolDisplayName }
       : null,
     unlockedBadgesCount: unlockedBadgeIds.length,
     sharedRoutesCount: sharedRoutes.length,
@@ -1221,20 +1252,47 @@ export default function DashboardPage() {
               </p>
             )}
 
-            {activePatrolProfile && (
+            {(activePatrolProfile || remotePatrolProfile) && (
               <div
                 className="mt-3 rounded-xl border border-border bg-white p-3"
                 aria-label="perfil-patrulha-resumo"
               >
-                <p className="text-sm font-semibold">
-                  {activePatrolProfile.displayName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {activePatrolProfile.bio}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Foco: {activePatrolProfile.focus}
-                </p>
+                {resolvedPatrolDisplayName && (
+                  <p className="text-sm font-semibold">
+                    {resolvedPatrolDisplayName}
+                  </p>
+                )}
+                {activePatrolProfile && (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      {activePatrolProfile.bio}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Foco: {activePatrolProfile.focus}
+                    </p>
+                  </>
+                )}
+                {remotePatrolProfile && (
+                  <>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Monitor: {remotePatrolProfile.monitorName}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Submonitor: {remotePatrolProfile.submonitorName ?? "-"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Membros cadastrados: {remotePatrolProfile.membersCount}
+                    </p>
+                    {remotePatrolProfile.recentMembers.length > 0 && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Membros recentes:{" "}
+                        {remotePatrolProfile.recentMembers
+                          .map((member) => member.name)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -1249,7 +1307,9 @@ export default function DashboardPage() {
               className="rounded-xl border border-border bg-white p-3"
               aria-label="resumo-social-patrulha"
             >
-              <p className="text-sm font-semibold">{socialSummary.displayName}</p>
+              <p className="text-sm font-semibold">
+                {socialSummary.displayName}
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Posição no ranking:{" "}
                 {socialSummary.rankingPosition
@@ -1266,7 +1326,8 @@ export default function DashboardPage() {
                 Badges desbloqueadas: {socialSummary.unlockedBadgesCount}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Rotas compartilhadas no evento: {socialSummary.sharedRoutesCount}
+                Rotas compartilhadas no evento:{" "}
+                {socialSummary.sharedRoutesCount}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Último snapshot de evento:{" "}

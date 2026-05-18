@@ -15,9 +15,9 @@ public static class PatrulhaEndpoints
         // POST /patrulha — cria Patrulha; o solicitante vira Monitor
         group.MapPost("/", async (
             CreatePatrulhaRequest req,
-            ClaimsPrincipal       principal,
-            PatrulhaService       service,
-            CancellationToken     ct) =>
+            ClaimsPrincipal principal,
+            PatrulhaService service,
+            CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest("Nome da Patrulha é obrigatório");
@@ -33,7 +33,7 @@ public static class PatrulhaEndpoints
 
         // GET /patrulha/{id}
         group.MapGet("/{id:guid}", async (
-            Guid              id,
+            Guid id,
             IdentityDbContext db,
             CancellationToken ct) =>
         {
@@ -43,9 +43,48 @@ public static class PatrulhaEndpoints
                 : Results.Ok(new PatrulhaResponse(p.Id, p.Name, p.MonitorId, p.SubmonitorId, p.CreatedAt));
         });
 
+        // GET /patrulha/{id}/social-profile
+        group.MapGet("/{id:guid}/social-profile", async (
+            Guid id,
+            IdentityDbContext db,
+            CancellationToken ct) =>
+        {
+            var patrulha = await db.Patrulhas
+                .AsNoTracking()
+                .Include(p => p.Monitor)
+                .Include(p => p.Submonitor)
+                .Include(p => p.Members)
+                    .ThenInclude(m => m.User)
+                .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+            if (patrulha is null)
+                return Results.NotFound();
+
+            var recentMembers = patrulha.Members
+                .OrderByDescending(member => member.JoinedAt)
+                .Take(5)
+                .Select(member => new PatrulhaMemberResponse(
+                    member.UserId,
+                    member.User.Name,
+                    member.User.Role.ToString(),
+                    member.JoinedAt))
+                .ToList();
+
+            return Results.Ok(new PatrulhaSocialProfileResponse(
+                patrulha.Id,
+                patrulha.Name,
+                patrulha.MonitorId,
+                patrulha.Monitor.Name,
+                patrulha.SubmonitorId,
+                patrulha.Submonitor?.Name,
+                patrulha.CreatedAt,
+                patrulha.Members.Count,
+                recentMembers));
+        });
+
         // GET /patrulha/{id}/members
         group.MapGet("/{id:guid}/members", async (
-            Guid              id,
+            Guid id,
             IdentityDbContext db,
             CancellationToken ct) =>
         {
@@ -60,11 +99,11 @@ public static class PatrulhaEndpoints
 
         // GET /patrulha/{id}/invite — gera novo QR de convite (Monitor ou Submonitor)
         group.MapGet("/{id:guid}/invite", async (
-            Guid              id,
-            ClaimsPrincipal   principal,
-            PatrulhaService   service,
-            QrCodeService     qrService,
-            IConfiguration    config,
+            Guid id,
+            ClaimsPrincipal principal,
+            PatrulhaService service,
+            QrCodeService qrService,
+            IConfiguration config,
             CancellationToken ct) =>
         {
             if (!Guid.TryParse(principal.FindFirstValue("sub"), out var userId))
@@ -72,10 +111,10 @@ public static class PatrulhaEndpoints
 
             try
             {
-                var invite  = await service.GenerateInviteAsync(id, userId, ct);
+                var invite = await service.GenerateInviteAsync(id, userId, ct);
                 var baseUrl = config["App:BaseUrl"] ?? "http://localhost:5001";
                 var joinUrl = $"{baseUrl}/patrulha/join?token={invite.Token}";
-                var qr      = qrService.GeneratePngBase64(joinUrl);
+                var qr = qrService.GeneratePngBase64(joinUrl);
 
                 return Results.Ok(new InviteResponse(invite.Id, invite.Token, joinUrl, qr, invite.ExpiresAt));
             }
@@ -92,9 +131,9 @@ public static class PatrulhaEndpoints
         // POST /patrulha/join — integrante entra na Patrulha via token do QR
         group.MapPost("/join", async (
             JoinPatrulhaRequest req,
-            ClaimsPrincipal     principal,
-            PatrulhaService     service,
-            CancellationToken   ct) =>
+            ClaimsPrincipal principal,
+            PatrulhaService service,
+            CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(req.Token))
                 return Results.BadRequest("Token é obrigatório");
@@ -111,11 +150,11 @@ public static class PatrulhaEndpoints
 
         // PUT /patrulha/{id}/submonitor — Monitor nomeia Submonitor
         group.MapPut("/{id:guid}/submonitor", async (
-            Guid                id,
+            Guid id,
             SetSubmonitorRequest req,
-            ClaimsPrincipal     principal,
-            PatrulhaService     service,
-            CancellationToken   ct) =>
+            ClaimsPrincipal principal,
+            PatrulhaService service,
+            CancellationToken ct) =>
         {
             if (!Guid.TryParse(principal.FindFirstValue("sub"), out var requesterId))
                 return Results.Unauthorized();

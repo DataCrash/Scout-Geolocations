@@ -25,3 +25,14 @@ public record PatrulhaMemberResponse(
     string Name,
     string Role,
     DateTime JoinedAt);
+
+public record PatrulhaSocialProfileResponse(
+    Guid Id,
+    string Name,
+    Guid MonitorId,
+    string MonitorName,
+    Guid? SubmonitorId,
+    string? SubmonitorName,
+    DateTime CreatedAt,
+    int MembersCount,
+    IReadOnlyList<PatrulhaMemberResponse> RecentMembers);

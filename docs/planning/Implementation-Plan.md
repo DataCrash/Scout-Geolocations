@@ -215,6 +215,8 @@
 - [x] Resumo social consolidado da Patrulha adicionado no Dashboard (ranking, badges, rotas e snapshot) com cobertura E2E.
 - [x] Badge customizável por evento adicionada no Dashboard, com desbloqueio dinâmico e cobertura E2E.
 - [x] Camada de Social Service local adicionada no frontend para consolidar o resumo social da Patrulha de forma reutilizável.
+- [x] Endpoint mínimo de perfil social da Patrulha adicionado na Identity API para leitura consolidada de monitor, submonitor e membros recentes.
+- [x] Dashboard do frontend passa a consumir o perfil social real da Patrulha quando a Identity API estiver disponível, mantendo fallback local offline.
 
 ---
 

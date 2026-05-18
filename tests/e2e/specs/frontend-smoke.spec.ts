@@ -175,6 +175,26 @@ test.describe("frontend MVP smoke", () => {
     ).toBeVisible();
   });
 
+  test("salva check-in na fila offline quando a rede falha", async ({ page }) => {
+    await prepareBrowserState(page);
+
+    await page.route(
+      "http://localhost:5004/api/challenges/**/validate",
+      async (route) => {
+        await route.abort("failed");
+      },
+    );
+
+    await page.goto("/");
+
+    await page.getByPlaceholder("Conteúdo do QR Code").fill("QR-OFFLINE-001");
+    await page.getByRole("button", { name: /Validar check-in/i }).click();
+
+    await expect(
+      page.getByText(/Sem conexão\. Check-in salvo na fila offline \(1 pendente\(s\)\)\./i),
+    ).toBeVisible();
+  });
+
   test("exibe erro quando listagem admin retorna payload inválido", async ({
     page,
   }) => {

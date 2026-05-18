@@ -225,6 +225,7 @@
 - [x] Parser de payload NFC agora valida resultado com Zod e mantém comportamento seguro quando `patrol` estruturado vem inválido (cobertura E2E dedicada).
 - [x] Validação Zod aplicada no fallback da Vision API com erro explícito para payload inválido e cobertura E2E dedicada.
 - [x] Conexão realtime do leaderboard atualizada para usar token do `auth-store` (remoção da dependência de `access_token` legado em localStorage).
+- [x] Fila offline de check-ins protegida com schema Zod (enqueue/flush), incluindo saneamento de itens inválidos e cobertura E2E de fallback em erro de rede.
 
 ---
 

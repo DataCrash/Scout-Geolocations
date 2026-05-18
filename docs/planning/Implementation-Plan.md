@@ -211,6 +211,7 @@
 - [x] Base local de badges adicionada ao Dashboard, com desbloqueio derivado do ranking e persistência no frontend.
 - [x] Histórico local de leaderboard entre eventos adicionado no Dashboard com persistência por `eventId` e cobertura E2E.
 - [x] Compartilhamento local de rotas personalizadas adicionado no Dashboard com persistência por evento e cobertura E2E.
+- [x] Perfil local de Patrulha adicionado no Dashboard com edição/persistência e cobertura E2E.
 
 ---
 

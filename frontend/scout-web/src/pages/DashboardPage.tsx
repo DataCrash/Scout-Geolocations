@@ -26,6 +26,7 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLeaderboardHistoryStore } from "@/store/useLeaderboardHistoryStore";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
+import { usePatrolProfileStore } from "@/store/usePatrolProfileStore";
 import { useSharedRoutesStore } from "@/store/useSharedRoutesStore";
 import {
   BADGE_CATALOG,
@@ -40,6 +41,7 @@ import {
   QrCode,
   Share2,
   ShieldCheck,
+  User,
   Trophy,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -68,6 +70,7 @@ export default function DashboardPage() {
   const { eventId, scores, bumpPatrol, applyRealtimeUpdate, lastRealtimeAt } =
     useLeaderboardStore();
   const { byEventId, upsertEventSnapshot } = useLeaderboardHistoryStore();
+  const { byPatrolId, upsertProfile } = usePatrolProfileStore();
   const { routesByEventId, shareRoute } = useSharedRoutesStore();
   const { unlockedBadgeIds, lastSyncedAt, syncFromScores } =
     useSocialBadgeStore();
@@ -104,6 +107,10 @@ export default function DashboardPage() {
     "Pórtico -> Bosque -> Lago",
   );
   const [routeMessage, setRouteMessage] = useState<string>("");
+  const [profileName, setProfileName] = useState("Patrulha Lobo");
+  const [profileBio, setProfileBio] = useState("Especialistas em orientação e trilha.");
+  const [profileFocus, setProfileFocus] = useState("Navegação e estratégia");
+  const [profileMessage, setProfileMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
@@ -253,6 +260,7 @@ export default function DashboardPage() {
         new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime(),
     )
     .slice(0, 5);
+  const activePatrolProfile = byPatrolId[patrulhaId];
   const sharedRoutes = routesByEventId[eventId] ?? [];
 
   const bestPoints = scores.length
@@ -261,6 +269,16 @@ export default function DashboardPage() {
   const bestValidatedChallenges = scores.length
     ? Math.max(...scores.map((score) => score.validatedChallenges))
     : 0;
+
+  useEffect(() => {
+    if (!activePatrolProfile) {
+      return;
+    }
+
+    setProfileName(activePatrolProfile.displayName);
+    setProfileBio(activePatrolProfile.bio);
+    setProfileFocus(activePatrolProfile.focus);
+  }, [activePatrolProfile]);
 
   useEffect(() => {
     let active = true;
@@ -584,6 +602,24 @@ export default function DashboardPage() {
       sharedBy: user?.name ?? "Monitor",
     });
     setRouteMessage("Rota compartilhada com sucesso.");
+  }
+
+  function handleSavePatrolProfile() {
+    const trimmedName = profileName.trim();
+    const trimmedBio = profileBio.trim();
+    const trimmedFocus = profileFocus.trim();
+
+    if (!trimmedName || !trimmedBio || !trimmedFocus) {
+      setProfileMessage("Preencha nome, bio e foco da Patrulha.");
+      return;
+    }
+
+    upsertProfile(patrulhaId, {
+      displayName: trimmedName,
+      bio: trimmedBio,
+      focus: trimmedFocus,
+    });
+    setProfileMessage("Perfil de Patrulha atualizado com sucesso.");
   }
 
   return (
@@ -1044,6 +1080,57 @@ export default function DashboardPage() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <User className="h-4 w-4" />
+              Perfil da Patrulha
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Nome da Patrulha"
+                value={profileName}
+                onChange={(event) => setProfileName(event.target.value)}
+              />
+              <textarea
+                className="min-h-[76px] rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Bio da Patrulha"
+                value={profileBio}
+                onChange={(event) => setProfileBio(event.target.value)}
+              />
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Foco tático"
+                value={profileFocus}
+                onChange={(event) => setProfileFocus(event.target.value)}
+              />
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <Button onClick={handleSavePatrolProfile}>Salvar perfil</Button>
+            </div>
+
+            {profileMessage && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {profileMessage}
+              </p>
+            )}
+
+            {activePatrolProfile && (
+              <div
+                className="mt-3 rounded-xl border border-border bg-white p-3"
+                aria-label="perfil-patrulha-resumo"
+              >
+                <p className="text-sm font-semibold">{activePatrolProfile.displayName}</p>
+                <p className="text-xs text-muted-foreground">{activePatrolProfile.bio}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Foco: {activePatrolProfile.focus}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">

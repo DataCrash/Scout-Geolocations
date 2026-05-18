@@ -51,7 +51,9 @@ test.describe("frontend auth api validation", () => {
     ).toBeVisible();
   });
 
-  test("mostra erro quando authorize retorna URL inválida", async ({ page }) => {
+  test("mostra erro quando authorize retorna URL inválida", async ({
+    page,
+  }) => {
     await page.route(
       "http://localhost:5001/auth/google/authorize",
       async (route) => {

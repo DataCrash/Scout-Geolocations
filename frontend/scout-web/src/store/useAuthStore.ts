@@ -1,6 +1,6 @@
+import type { AuthRole } from "@/lib/schemas/authApiSchemas";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { AuthRole } from "@/lib/schemas/authApiSchemas";
 
 export interface AuthUser {
   id: string;

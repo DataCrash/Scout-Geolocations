@@ -1,7 +1,7 @@
 import {
   challengeAttemptSchema,
-  type AttemptResponse,
   validateChallengeRequestSchema,
+  type AttemptResponse,
   type ValidateChallengeRequest,
 } from "@/lib/schemas/challengeAttemptSchema";
 import { getAuthHeader } from "@/store/useAuthStore";

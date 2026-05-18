@@ -170,7 +170,9 @@ test.describe("frontend MVP smoke", () => {
     await page.getByPlaceholder("UserId").fill("");
     await page.getByRole("button", { name: /Validar check-in/i }).click();
 
-    await expect(page.getByText(/Payload inválido de check-in\./i)).toBeVisible();
+    await expect(
+      page.getByText(/Payload inválido de check-in\./i),
+    ).toBeVisible();
   });
 
   test("exibe erro quando listagem admin retorna payload inválido", async ({

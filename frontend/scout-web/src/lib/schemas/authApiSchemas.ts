@@ -26,5 +26,7 @@ export const authMeResponseSchema = z.object({
 });
 
 export type GoogleLoginResponse = z.infer<typeof authLoginResponseSchema>;
-export type OAuthAuthorizeResponse = z.infer<typeof oauthAuthorizeResponseSchema>;
+export type OAuthAuthorizeResponse = z.infer<
+  typeof oauthAuthorizeResponseSchema
+>;
 export type AuthMeResponse = z.infer<typeof authMeResponseSchema>;

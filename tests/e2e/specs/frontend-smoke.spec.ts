@@ -1,22 +1,5 @@
+import { type ChallengeItem as MockChallengeItem } from "@/lib/schemas/challengeItemSchema";
 import { expect, test } from "@playwright/test";
-
-type MockChallengeItem = {
-  id: string;
-  eventId: string;
-  title: string;
-  description: string;
-  type: number;
-  status: number;
-  qrCode?: string;
-  latitude?: number;
-  longitude?: number;
-  radiusMeters: number;
-  basePoints: number;
-  bonusPoints: number;
-  bonusTimeSeconds: number;
-  geocacheId?: string;
-  createdAt: string;
-};
 
 const mockEventId = "00000000-0000-0000-0000-000000000001";
 
@@ -175,6 +158,31 @@ test.describe("frontend MVP smoke", () => {
 
     await expect(
       page.getByText(/Resposta inválida da API de check-in\./i),
+    ).toBeVisible();
+  });
+
+  test("exibe erro quando listagem admin retorna payload inválido", async ({
+    page,
+  }) => {
+    await prepareBrowserState(page);
+
+    await page.route(
+      "http://localhost:5004/api/challenges?*",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ invalid: true }),
+        });
+      },
+    );
+
+    await page.goto("/");
+
+    await page.getByRole("button", { name: /Recarregar lista/i }).click();
+
+    await expect(
+      page.getByText(/Resposta inválida da API de desafios\./i),
     ).toBeVisible();
   });
 

@@ -221,6 +221,7 @@
 - [x] Validação Zod aplicada no contrato de resposta de check-in (`validateChallenge`), com mensagem explícita para payload inválido e cobertura E2E de smoke.
 - [x] Validação Zod aplicada no `adminChallengesApi` (list/create/update), com erro explícito para payload inválido e cobertura E2E no painel admin.
 - [x] Validação Zod aplicada no `authApi` (guest/google/authorize/me), com erro explícito para payload inválido e cobertura E2E no login.
+- [x] Validação Zod aplicada também no payload de entrada de `validateChallenge`, com bloqueio local de request inválida e cobertura E2E dedicada.
 
 ---
 

@@ -161,6 +161,18 @@ test.describe("frontend MVP smoke", () => {
     ).toBeVisible();
   });
 
+  test("exibe erro quando payload local de check-in está inválido", async ({
+    page,
+  }) => {
+    await prepareBrowserState(page);
+    await page.goto("/");
+
+    await page.getByPlaceholder("UserId").fill("");
+    await page.getByRole("button", { name: /Validar check-in/i }).click();
+
+    await expect(page.getByText(/Payload inválido de check-in\./i)).toBeVisible();
+  });
+
   test("exibe erro quando listagem admin retorna payload inválido", async ({
     page,
   }) => {

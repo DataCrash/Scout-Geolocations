@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+export const validateChallengeRequestSchema = z.object({
+  PatrulhaId: z.string().min(1),
+  UserId: z.string().min(1),
+  ScannedQrCode: z.string().min(1).optional(),
+  Latitude: z.number().optional(),
+  Longitude: z.number().optional(),
+  PhotoBase64: z.string().min(1).optional(),
+});
+
+export type ValidateChallengeRequest = z.infer<
+  typeof validateChallengeRequestSchema
+>;
+
 export const challengeAttemptSchema = z.object({
   id: z.string().min(1),
   challengeId: z.string().min(1),

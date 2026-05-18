@@ -9,6 +9,7 @@ import {
 } from "@/services/adminChallengesApi";
 import { validateChallenge } from "@/services/challengeApi";
 import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
+import { parseNfcPayload } from "@/services/nfcPayload";
 import {
   enqueueCheckinSubmission,
   flushCheckinQueue,
@@ -18,19 +19,26 @@ import {
   analyzePhotoLocally,
   type PhotoInferenceResult,
 } from "@/services/photoInference";
-import { parseNfcPayload } from "@/services/nfcPayload";
 import {
   analyzePhotoWithVisionApi,
   type VisionAnalysisResponse,
 } from "@/services/visionApi";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useLeaderboardHistoryStore } from "@/store/useLeaderboardHistoryStore";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
+import { useSharedRoutesStore } from "@/store/useSharedRoutesStore";
+import {
+  BADGE_CATALOG,
+  useSocialBadgeStore,
+} from "@/store/useSocialBadgeStore";
 import L from "leaflet";
 import {
+  Award,
   Camera,
   Compass,
   LogOut,
   QrCode,
+  Share2,
   ShieldCheck,
   Trophy,
 } from "lucide-react";
@@ -59,6 +67,10 @@ export default function DashboardPage() {
   const { user, logout } = useAuthStore();
   const { eventId, scores, bumpPatrol, applyRealtimeUpdate, lastRealtimeAt } =
     useLeaderboardStore();
+  const { byEventId, upsertEventSnapshot } = useLeaderboardHistoryStore();
+  const { routesByEventId, shareRoute } = useSharedRoutesStore();
+  const { unlockedBadgeIds, lastSyncedAt, syncFromScores } =
+    useSocialBadgeStore();
   const mapRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -87,6 +99,11 @@ export default function DashboardPage() {
   const [adminType, setAdminType] = useState<number>(0);
   const [adminQr, setAdminQr] = useState("QR-DEMO-001");
   const [adminMessage, setAdminMessage] = useState<string>("");
+  const [routeName, setRouteName] = useState("Rota Trilha Norte");
+  const [routeWaypoints, setRouteWaypoints] = useState(
+    "Pórtico -> Bosque -> Lago",
+  );
+  const [routeMessage, setRouteMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
@@ -221,6 +238,29 @@ export default function DashboardPage() {
         : `Tag NFC lida com sucesso: ${parsed.raw}`,
     );
   }, [nfcPayload]);
+
+  useEffect(() => {
+    syncFromScores(scores);
+  }, [scores, syncFromScores]);
+
+  useEffect(() => {
+    upsertEventSnapshot(eventId, scores);
+  }, [eventId, scores, upsertEventSnapshot]);
+
+  const eventHistory = Object.values(byEventId)
+    .sort(
+      (a, b) =>
+        new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime(),
+    )
+    .slice(0, 5);
+  const sharedRoutes = routesByEventId[eventId] ?? [];
+
+  const bestPoints = scores.length
+    ? Math.max(...scores.map((score) => score.points))
+    : 0;
+  const bestValidatedChallenges = scores.length
+    ? Math.max(...scores.map((score) => score.validatedChallenges))
+    : 0;
 
   useEffect(() => {
     let active = true;
@@ -529,6 +569,23 @@ export default function DashboardPage() {
     }
   }
 
+  function handleShareRoute() {
+    const trimmedName = routeName.trim();
+    const trimmedWaypoints = routeWaypoints.trim();
+
+    if (!trimmedName || !trimmedWaypoints) {
+      setRouteMessage("Informe nome e waypoints da rota para compartilhar.");
+      return;
+    }
+
+    shareRoute(eventId, {
+      name: trimmedName,
+      waypoints: trimmedWaypoints,
+      sharedBy: user?.name ?? "Monitor",
+    });
+    setRouteMessage("Rota compartilhada com sucesso.");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(34,211,238,0.22),transparent_35%),radial-gradient(circle_at_85%_10%,rgba(251,146,60,0.2),transparent_30%),linear-gradient(140deg,#f2fbfe_0%,#eff6ff_45%,#fffaf2_100%)]" />
@@ -835,6 +892,159 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Trophy className="h-4 w-4" />
+              Histórico entre eventos
+            </div>
+
+            <ul className="space-y-2" aria-label="historico-entre-eventos">
+              {eventHistory.map((snapshot) => {
+                const leader = snapshot.scores[0];
+
+                return (
+                  <li
+                    key={snapshot.eventId}
+                    className="rounded-xl border border-border/70 bg-white p-3"
+                  >
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Evento {snapshot.eventId.slice(0, 8)}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {leader
+                        ? `${leader.name}: ${leader.points} pts`
+                        : "Sem pontuação registrada"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Atualizado às{" "}
+                      {new Date(snapshot.capturedAt).toLocaleTimeString(
+                        "pt-BR",
+                      )}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Award className="h-4 w-4" />
+              Badges do evento
+            </div>
+
+            <div className="space-y-3">
+              {BADGE_CATALOG.map((badge) => {
+                const isUnlocked = unlockedBadgeIds.includes(badge.id);
+
+                return (
+                  <div
+                    key={badge.id}
+                    className={`rounded-2xl border p-4 transition ${
+                      isUnlocked
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-border/70 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                          {isUnlocked ? "Desbloqueado" : "Pendente"}
+                        </p>
+                        <h3 className="mt-1 text-base font-semibold">
+                          {badge.title}
+                        </h3>
+                      </div>
+                      <span className="rounded-full border border-border/70 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        {isUnlocked ? "Ativo" : "Meta"}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {badge.description}
+                    </p>
+
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {badge.thresholdPoints !== undefined && (
+                        <span className="block">
+                          Meta de pontos: {badge.thresholdPoints}
+                          {!isUnlocked && bestPoints < badge.thresholdPoints
+                            ? ` · faltam ${badge.thresholdPoints - bestPoints}`
+                            : ""}
+                        </span>
+                      )}
+                      {badge.thresholdChallenges !== undefined && (
+                        <span className="block">
+                          Meta de desafios: {badge.thresholdChallenges}
+                          {!isUnlocked &&
+                          bestValidatedChallenges < badge.thresholdChallenges
+                            ? ` · faltam ${badge.thresholdChallenges - bestValidatedChallenges}`
+                            : ""}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {lastSyncedAt && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Sincronizado com o ranking às{" "}
+                {new Date(lastSyncedAt).toLocaleTimeString("pt-BR")}.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Share2 className="h-4 w-4" />
+              Rotas compartilhadas
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Nome da rota"
+                value={routeName}
+                onChange={(event) => setRouteName(event.target.value)}
+              />
+              <textarea
+                className="min-h-[76px] rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Waypoints da rota"
+                value={routeWaypoints}
+                onChange={(event) => setRouteWaypoints(event.target.value)}
+              />
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <Button onClick={handleShareRoute}>Compartilhar rota</Button>
+            </div>
+
+            {routeMessage && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {routeMessage}
+              </p>
+            )}
+
+            <ul className="mt-4 space-y-2" aria-label="rotas-compartilhadas">
+              {sharedRoutes.slice(0, 5).map((route) => (
+                <li
+                  key={route.id}
+                  className="rounded-xl border border-border bg-white p-3"
+                >
+                  <p className="text-sm font-semibold">{route.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {route.waypoints}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Compartilhada por {route.sharedBy}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">

@@ -208,6 +208,9 @@
 - [x] Cobertura E2E adicionada para fallback WebNFC -> QR no frontend.
 - [x] POC de vínculo de Patrulha por NFC implementada via payload estruturado (`patrol=<uuid>;qr=<code>`) com cobertura E2E dedicada.
 - [x] Service Worker expandido para capturar `POST /api/challenges/{id}/validate` offline, enfileirar e reenviar automaticamente ao reconectar.
+- [x] Base local de badges adicionada ao Dashboard, com desbloqueio derivado do ranking e persistência no frontend.
+- [x] Histórico local de leaderboard entre eventos adicionado no Dashboard com persistência por `eventId` e cobertura E2E.
+- [x] Compartilhamento local de rotas personalizadas adicionado no Dashboard com persistência por evento e cobertura E2E.
 
 ---
 

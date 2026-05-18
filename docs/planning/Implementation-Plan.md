@@ -228,6 +228,7 @@
 - [x] Fila offline de check-ins protegida com schema Zod (enqueue/flush), incluindo saneamento de itens inválidos e cobertura E2E de fallback em erro de rede.
 - [x] Callback OAuth do frontend agora valida parâmetros com schema de autenticação (role incluída), com cobertura E2E para sucesso e cenários inválidos.
 - [x] Resposta de `GET /auth/google/authorize` endurecida com validação de URL absoluta no schema Zod, com cobertura E2E para payload com `authorizationUrl` inválida.
+- [x] Tipagem de `role` de autenticação consolidada a partir do schema Zod no frontend, removendo cast inseguro no login de convidado.
 
 ---
 

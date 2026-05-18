@@ -6,6 +6,8 @@ export const authRoleSchema = z.enum([
   "Convidado",
 ]);
 
+export type AuthRole = z.infer<typeof authRoleSchema>;
+
 export const authLoginResponseSchema = z.object({
   token: z.string().min(1),
   userId: z.string().min(1),

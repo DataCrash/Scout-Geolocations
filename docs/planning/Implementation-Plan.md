@@ -229,9 +229,9 @@
 ### Critérios de aceite
 
 - [x] Sistema de badges com critérios configuráveis por evento.
-- [ ] Leaderboard histórico entre eventos.
-- [ ] Compartilhamento de rotas personalizadas.
-- [ ] Social Service ativo com perfis de Patrulha.
+- [x] Leaderboard histórico entre eventos.
+- [x] Compartilhamento de rotas personalizadas.
+- [x] Social Service ativo com perfis de Patrulha.
 
 ### Entregas técnicas
 

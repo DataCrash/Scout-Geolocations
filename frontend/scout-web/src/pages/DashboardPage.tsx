@@ -29,7 +29,7 @@ import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import { usePatrolProfileStore } from "@/store/usePatrolProfileStore";
 import { useSharedRoutesStore } from "@/store/useSharedRoutesStore";
 import {
-  BADGE_CATALOG,
+  DEFAULT_BADGE_CATALOG,
   useSocialBadgeStore,
 } from "@/store/useSocialBadgeStore";
 import L from "leaflet";
@@ -72,8 +72,13 @@ export default function DashboardPage() {
   const { byEventId, upsertEventSnapshot } = useLeaderboardHistoryStore();
   const { byPatrolId, upsertProfile } = usePatrolProfileStore();
   const { routesByEventId, shareRoute } = useSharedRoutesStore();
-  const { unlockedBadgeIds, lastSyncedAt, syncFromScores } =
-    useSocialBadgeStore();
+  const {
+    badgeCatalogByEventId,
+    unlockedBadgeIdsByEventId,
+    lastSyncedAtByEventId,
+    addBadgeForEvent,
+    syncFromScores,
+  } = useSocialBadgeStore();
   const mapRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -113,6 +118,13 @@ export default function DashboardPage() {
   );
   const [profileFocus, setProfileFocus] = useState("Navegação e estratégia");
   const [profileMessage, setProfileMessage] = useState<string>("");
+  const [badgeTitle, setBadgeTitle] = useState("Sentinela do Vale");
+  const [badgeDescription, setBadgeDescription] = useState(
+    "Alcançar 121 pontos no evento.",
+  );
+  const [badgePointsThreshold, setBadgePointsThreshold] = useState("121");
+  const [badgeChallengesThreshold, setBadgeChallengesThreshold] = useState("");
+  const [badgeMessage, setBadgeMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
@@ -249,8 +261,8 @@ export default function DashboardPage() {
   }, [nfcPayload]);
 
   useEffect(() => {
-    syncFromScores(scores);
-  }, [scores, syncFromScores]);
+    syncFromScores(eventId, scores);
+  }, [eventId, scores, syncFromScores]);
 
   useEffect(() => {
     upsertEventSnapshot(eventId, scores);
@@ -262,6 +274,9 @@ export default function DashboardPage() {
         new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime(),
     )
     .slice(0, 5);
+  const eventBadges = badgeCatalogByEventId[eventId] ?? DEFAULT_BADGE_CATALOG;
+  const unlockedBadgeIds = unlockedBadgeIdsByEventId[eventId] ?? [];
+  const lastSyncedAt = lastSyncedAtByEventId[eventId] ?? null;
   const activePatrolProfile = byPatrolId[patrulhaId];
   const sharedRoutes = routesByEventId[eventId] ?? [];
   const activePatrolScore =
@@ -634,6 +649,33 @@ export default function DashboardPage() {
     setProfileMessage("Perfil de Patrulha atualizado com sucesso.");
   }
 
+  function handleAddCustomBadge() {
+    const thresholdPoints = badgePointsThreshold.trim()
+      ? Number(badgePointsThreshold)
+      : undefined;
+    const thresholdChallenges = badgeChallengesThreshold.trim()
+      ? Number(badgeChallengesThreshold)
+      : undefined;
+
+    if (!badgeTitle.trim() || !badgeDescription.trim()) {
+      setBadgeMessage("Informe título e descrição da badge.");
+      return;
+    }
+
+    if (thresholdPoints === undefined && thresholdChallenges === undefined) {
+      setBadgeMessage("Defina ao menos uma meta de pontos ou desafios.");
+      return;
+    }
+
+    addBadgeForEvent(eventId, {
+      title: badgeTitle,
+      description: badgeDescription,
+      thresholdPoints,
+      thresholdChallenges,
+    });
+    setBadgeMessage("Badge personalizada adicionada ao evento.");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(34,211,238,0.22),transparent_35%),radial-gradient(circle_at_85%_10%,rgba(251,146,60,0.2),transparent_30%),linear-gradient(140deg,#f2fbfe_0%,#eff6ff_45%,#fffaf2_100%)]" />
@@ -982,8 +1024,51 @@ export default function DashboardPage() {
               Badges do evento
             </div>
 
-            <div className="space-y-3">
-              {BADGE_CATALOG.map((badge) => {
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Título da badge"
+                value={badgeTitle}
+                onChange={(event) => setBadgeTitle(event.target.value)}
+              />
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Descrição da badge"
+                value={badgeDescription}
+                onChange={(event) => setBadgeDescription(event.target.value)}
+              />
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <input
+                  className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                  placeholder="Meta de pontos"
+                  value={badgePointsThreshold}
+                  onChange={(event) =>
+                    setBadgePointsThreshold(event.target.value)
+                  }
+                />
+                <input
+                  className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                  placeholder="Meta de desafios"
+                  value={badgeChallengesThreshold}
+                  onChange={(event) =>
+                    setBadgeChallengesThreshold(event.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <Button onClick={handleAddCustomBadge}>Adicionar badge</Button>
+            </div>
+
+            {badgeMessage && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {badgeMessage}
+              </p>
+            )}
+
+            <div className="mt-4 space-y-3" aria-label="badges-evento-list">
+              {eventBadges.map((badge) => {
                 const isUnlocked = unlockedBadgeIds.includes(badge.id);
 
                 return (
@@ -1161,13 +1246,15 @@ export default function DashboardPage() {
             >
               <p className="text-sm font-semibold">{socialProfileName}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Posição no ranking: {patrolPosition ? `${patrolPosition}º` : "-"}
+                Posição no ranking:{" "}
+                {patrolPosition ? `${patrolPosition}º` : "-"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Pontos atuais: {activePatrolScore?.points ?? 0}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Desafios validados: {activePatrolScore?.validatedChallenges ?? 0}
+                Desafios validados:{" "}
+                {activePatrolScore?.validatedChallenges ?? 0}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Badges desbloqueadas: {unlockedBadgeIds.length}
@@ -1176,7 +1263,10 @@ export default function DashboardPage() {
                 Rotas compartilhadas no evento: {sharedRoutes.length}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Último snapshot de evento: {latestEventSnapshot ? latestEventSnapshot.eventId.slice(0, 8) : "indisponível"}
+                Último snapshot de evento:{" "}
+                {latestEventSnapshot
+                  ? latestEventSnapshot.eventId.slice(0, 8)
+                  : "indisponível"}
               </p>
             </div>
           </div>

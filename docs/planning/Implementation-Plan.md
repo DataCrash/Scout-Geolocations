@@ -213,6 +213,7 @@
 - [x] Compartilhamento local de rotas personalizadas adicionado no Dashboard com persistência por evento e cobertura E2E.
 - [x] Perfil local de Patrulha adicionado no Dashboard com edição/persistência e cobertura E2E.
 - [x] Resumo social consolidado da Patrulha adicionado no Dashboard (ranking, badges, rotas e snapshot) com cobertura E2E.
+- [x] Badge customizável por evento adicionada no Dashboard, com desbloqueio dinâmico e cobertura E2E.
 
 ---
 
@@ -224,7 +225,7 @@
 
 ### Critérios de aceite
 
-- [ ] Sistema de badges com critérios configuráveis por evento.
+- [x] Sistema de badges com critérios configuráveis por evento.
 - [ ] Leaderboard histórico entre eventos.
 - [ ] Compartilhamento de rotas personalizadas.
 - [ ] Social Service ativo com perfis de Patrulha.

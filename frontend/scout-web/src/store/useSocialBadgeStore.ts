@@ -16,7 +16,7 @@ export type BadgeDefinition = {
   thresholdChallenges?: number;
 };
 
-export const BADGE_CATALOG: BadgeDefinition[] = [
+export const DEFAULT_BADGE_CATALOG: BadgeDefinition[] = [
   {
     id: "arrancada-do-evento",
     title: "Arrancada do Evento",
@@ -57,40 +57,98 @@ function badgeMatchesScores(badge: BadgeDefinition, scores: ScoreSnapshot[]) {
 }
 
 type SocialBadgeState = {
-  unlockedBadgeIds: string[];
-  lastSyncedAt: string | null;
-  syncFromScores: (scores: ScoreSnapshot[]) => void;
+  badgeCatalogByEventId: Record<string, BadgeDefinition[]>;
+  unlockedBadgeIdsByEventId: Record<string, string[]>;
+  lastSyncedAtByEventId: Record<string, string>;
+  addBadgeForEvent: (
+    eventId: string,
+    badge: Omit<BadgeDefinition, "id">,
+  ) => void;
+  syncFromScores: (eventId: string, scores: ScoreSnapshot[]) => void;
   resetBadges: () => void;
 };
 
 export const useSocialBadgeStore = create<SocialBadgeState>()(
   persist(
     (set, get) => ({
-      unlockedBadgeIds: [],
-      lastSyncedAt: null,
+      badgeCatalogByEventId: {},
+      unlockedBadgeIdsByEventId: {},
+      lastSyncedAtByEventId: {},
 
-      syncFromScores: (scores) => {
-        const unlocked = new Set(get().unlockedBadgeIds);
+      addBadgeForEvent: (eventId, badge) => {
+        if (!eventId) {
+          return;
+        }
 
-        for (const badge of BADGE_CATALOG) {
+        const title = badge.title.trim();
+        const description = badge.description.trim();
+        if (!title || !description) {
+          return;
+        }
+
+        const customBadge: BadgeDefinition = {
+          id: `${eventId}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+          title,
+          description,
+          thresholdPoints: badge.thresholdPoints,
+          thresholdChallenges: badge.thresholdChallenges,
+        };
+
+        set((state) => {
+          const existingCatalog =
+            state.badgeCatalogByEventId[eventId] ?? DEFAULT_BADGE_CATALOG;
+
+          return {
+            badgeCatalogByEventId: {
+              ...state.badgeCatalogByEventId,
+              [eventId]: [...existingCatalog, customBadge],
+            },
+          };
+        });
+      },
+
+      syncFromScores: (eventId, scores) => {
+        if (!eventId) {
+          return;
+        }
+
+        const catalog =
+          get().badgeCatalogByEventId[eventId] ?? DEFAULT_BADGE_CATALOG;
+        const unlocked = new Set(
+          get().unlockedBadgeIdsByEventId[eventId] ?? [],
+        );
+
+        for (const badge of catalog) {
           if (badgeMatchesScores(badge, scores)) {
             unlocked.add(badge.id);
           }
         }
 
-        set({
-          unlockedBadgeIds: [...unlocked],
-          lastSyncedAt: new Date().toISOString(),
-        });
+        set((state) => ({
+          unlockedBadgeIdsByEventId: {
+            ...state.unlockedBadgeIdsByEventId,
+            [eventId]: [...unlocked],
+          },
+          lastSyncedAtByEventId: {
+            ...state.lastSyncedAtByEventId,
+            [eventId]: new Date().toISOString(),
+          },
+        }));
       },
 
-      resetBadges: () => set({ unlockedBadgeIds: [], lastSyncedAt: null }),
+      resetBadges: () =>
+        set({
+          badgeCatalogByEventId: {},
+          unlockedBadgeIdsByEventId: {},
+          lastSyncedAtByEventId: {},
+        }),
     }),
     {
       name: "social-badge-store",
       partialize: (state) => ({
-        unlockedBadgeIds: state.unlockedBadgeIds,
-        lastSyncedAt: state.lastSyncedAt,
+        badgeCatalogByEventId: state.badgeCatalogByEventId,
+        unlockedBadgeIdsByEventId: state.unlockedBadgeIdsByEventId,
+        lastSyncedAtByEventId: state.lastSyncedAtByEventId,
       }),
     },
   ),

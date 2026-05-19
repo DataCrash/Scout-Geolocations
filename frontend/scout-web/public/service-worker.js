@@ -51,7 +51,10 @@ async function withOfflineStore(mode, operation) {
 }
 
 function isCheckinValidationRequest(request, url) {
-  return request.method === "POST" && /\/api\/challenges\/[^/]+\/validate$/i.test(url.pathname);
+  return (
+    request.method === "POST" &&
+    /\/api\/challenges\/[^/]+\/validate$/i.test(url.pathname)
+  );
 }
 
 function parseChallengeId(pathname) {
@@ -156,7 +159,8 @@ async function handleOfflineCheckinFallback(request) {
       userId: payload.UserId || payload.userId || "offline-user",
       status: 0,
       pointsAwarded: 0,
-      failReason: "Sem conexão. Submissão capturada pelo Service Worker para sincronização.",
+      failReason:
+        "Sem conexão. Submissão capturada pelo Service Worker para sincronização.",
       attemptedAt: new Date().toISOString(),
       validatedAt: null,
     }),

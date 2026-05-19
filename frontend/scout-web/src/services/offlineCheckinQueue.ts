@@ -1,17 +1,12 @@
+import {
+  queuedCheckinSubmissionSchema,
+  type QueuedCheckinSubmission,
+} from "@/lib/schemas/queuedCheckinSchema";
 import type { ValidateChallengeRequest } from "@/services/challengeApi";
 
 const DB_NAME = "scout-offline-db";
 const DB_VERSION = 1;
 const STORE_NAME = "checkinQueue";
-
-export type QueuedCheckinSubmission = {
-  id: string;
-  challengeId: string;
-  payload: ValidateChallengeRequest;
-  queuedAt: string;
-  retries: number;
-  lastError?: string;
-};
 
 function generateQueueId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -71,13 +66,20 @@ export async function enqueueCheckinSubmission(
   challengeId: string,
   payload: ValidateChallengeRequest,
 ): Promise<QueuedCheckinSubmission> {
-  const item: QueuedCheckinSubmission = {
+  const candidate: QueuedCheckinSubmission = {
     id: generateQueueId(),
     challengeId,
     payload,
     queuedAt: new Date().toISOString(),
     retries: 0,
   };
+
+  const parsed = queuedCheckinSubmissionSchema.safeParse(candidate);
+  if (!parsed.success) {
+    throw new Error("Payload inválido para fila offline de check-in.");
+  }
+
+  const item = parsed.data;
 
   await withStore("readwrite", async (store) => {
     await requestToPromise(store.put(item));
@@ -101,16 +103,50 @@ export async function flushCheckinQueue(
   ) => Promise<unknown>,
 ): Promise<{ synced: number; remaining: number }> {
   const all = await withStore("readonly", async (store) => {
-    const items = await requestToPromise<QueuedCheckinSubmission[]>(
-      store.getAll(),
-    );
-
-    return items.sort((a, b) => a.queuedAt.localeCompare(b.queuedAt));
+    const items = await requestToPromise<unknown[]>(store.getAll());
+    return items;
   });
+
+  const validItems: QueuedCheckinSubmission[] = [];
+  const invalidIds: string[] = [];
+
+  for (const item of all) {
+    const parsed = queuedCheckinSubmissionSchema.safeParse(item);
+    if (parsed.success) {
+      validItems.push(parsed.data);
+      continue;
+    }
+
+    const maybeId =
+      typeof item === "object" &&
+      item !== null &&
+      "id" in item &&
+      typeof (item as { id?: unknown }).id === "string"
+        ? (item as { id: string }).id
+        : null;
+
+    if (maybeId) {
+      invalidIds.push(maybeId);
+    }
+  }
+
+  if (invalidIds.length > 0) {
+    await withStore("readwrite", async (store) => {
+      for (const id of invalidIds) {
+        await requestToPromise(store.delete(id));
+      }
+
+      return undefined;
+    });
+  }
+
+  const sorted = validItems.sort((a, b) =>
+    a.queuedAt.localeCompare(b.queuedAt),
+  );
 
   let synced = 0;
 
-  for (const item of all) {
+  for (const item of sorted) {
     try {
       await submit(item.challengeId, item.payload);
 

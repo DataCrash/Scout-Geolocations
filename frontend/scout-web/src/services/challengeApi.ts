@@ -1,34 +1,24 @@
+import {
+  challengeAttemptSchema,
+  validateChallengeRequestSchema,
+  type AttemptResponse,
+  type ValidateChallengeRequest,
+} from "@/lib/schemas/challengeAttemptSchema";
 import { getAuthHeader } from "@/store/useAuthStore";
 
 const API_BASE_URL =
   import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
 
-export type ValidateChallengeRequest = {
-  PatrulhaId: string;
-  UserId: string;
-  ScannedQrCode?: string;
-  Latitude?: number;
-  Longitude?: number;
-  PhotoBase64?: string;
-};
-
-export type AttemptResponse = {
-  id: string;
-  challengeId: string;
-  patrulhaId: string;
-  userId: string;
-  status: number;
-  pointsAwarded: number;
-  failReason?: string;
-  distanceMeters?: number;
-  attemptedAt: string;
-  validatedAt?: string;
-};
-
 export async function validateChallenge(
   challengeId: string,
   payload: ValidateChallengeRequest,
 ): Promise<AttemptResponse> {
+  const requestParsed = validateChallengeRequestSchema.safeParse(payload);
+
+  if (!requestParsed.success) {
+    throw new Error("Payload inválido de check-in.");
+  }
+
   const response = await fetch(
     `${API_BASE_URL}/api/challenges/${challengeId}/validate`,
     {
@@ -37,7 +27,7 @@ export async function validateChallenge(
         "Content-Type": "application/json",
         ...getAuthHeader(),
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(requestParsed.data),
     },
   );
 
@@ -57,5 +47,12 @@ export async function validateChallenge(
     throw new Error(detail);
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = challengeAttemptSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de check-in.");
+  }
+
+  return parsed.data;
 }

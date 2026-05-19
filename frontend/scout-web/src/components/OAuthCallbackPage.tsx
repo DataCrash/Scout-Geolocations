@@ -1,6 +1,29 @@
+import { authLoginResponseSchema } from "@/lib/schemas/authApiSchemas";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+
+function resolveOAuthErrorMessage(
+  errorCode: string,
+  errorDescription: string | null,
+): string {
+  if (errorCode === "oauth_domain_not_allowed") {
+    return "Esta conta nao pertence aos Escoteiros. Use uma conta @escoteiros.org.br para entrar.";
+  }
+
+  if (
+    errorCode === "oauth_invalid_code" ||
+    errorCode === "oauth_missing_code"
+  ) {
+    return "Nao foi possivel concluir o login com Google. Tente novamente.";
+  }
+
+  if (errorDescription?.trim()) {
+    return errorDescription;
+  }
+
+  return `Falha no login: ${errorCode}`;
+}
 
 export function OAuthCallbackPage() {
   const navigate = useNavigate();
@@ -19,16 +42,28 @@ export function OAuthCallbackPage() {
         const name = searchParams.get("name");
         const role = searchParams.get("role");
         const error = searchParams.get("error");
+        const errorDescription = searchParams.get("errorDescription");
 
         if (error) {
+          const friendlyMessage = resolveOAuthErrorMessage(
+            error,
+            errorDescription,
+          );
           setStatus("error");
-          setMessage(`Login failed: ${error}`);
-          setError(`Login failed: ${error}`);
+          setMessage(friendlyMessage);
+          setError(friendlyMessage);
           setTimeout(() => navigate("/login"), 3000);
           return;
         }
 
-        if (!token || !userId || !name || !role) {
+        const parsed = authLoginResponseSchema.safeParse({
+          token,
+          userId,
+          name,
+          role,
+        });
+
+        if (!parsed.success) {
           setStatus("error");
           setMessage("Invalid callback parameters");
           setError("Invalid callback parameters");
@@ -37,11 +72,11 @@ export function OAuthCallbackPage() {
         }
 
         // Store credentials
-        setToken(token);
+        setToken(parsed.data.token);
         setUser({
-          id: userId,
-          name: name,
-          role: role as any,
+          id: parsed.data.userId,
+          name: parsed.data.name,
+          role: parsed.data.role,
         });
 
         setStatus("success");

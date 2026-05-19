@@ -1,11 +1,10 @@
+import {
+  nfcPayloadResultSchema,
+  type NfcPayloadResult,
+} from "@/lib/schemas/nfcPayloadSchema";
+
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-type NfcPayloadResult = {
-  raw: string;
-  patrulhaId?: string;
-  checkinCode?: string;
-};
 
 function normalize(value: string) {
   return value.trim();
@@ -49,7 +48,10 @@ function parseKeyValue(raw: string): NfcPayloadResult | null {
     .filter(Boolean)
     .map((entry) => {
       const [key, ...valueParts] = entry.split("=");
-      return [key.trim().toLowerCase(), normalize(valueParts.join("="))] as const;
+      return [
+        key.trim().toLowerCase(),
+        normalize(valueParts.join("=")),
+      ] as const;
     });
 
   const map = new Map(entries);
@@ -73,18 +75,27 @@ export function parseNfcPayload(rawPayload: string): NfcPayloadResult {
     return { raw: "" };
   }
 
+  function ensureValidResult(candidate: NfcPayloadResult): NfcPayloadResult {
+    const parsed = nfcPayloadResultSchema.safeParse(candidate);
+    if (parsed.success) {
+      return parsed.data;
+    }
+
+    return { raw, checkinCode: raw };
+  }
+
   const prefixed = parsePrefixed(raw);
   if (prefixed) {
-    return prefixed;
+    return ensureValidResult(prefixed);
   }
 
   const keyValue = parseKeyValue(raw);
   if (keyValue) {
-    return keyValue;
+    return ensureValidResult(keyValue);
   }
 
-  return {
+  return ensureValidResult({
     raw,
     checkinCode: raw,
-  };
+  });
 }

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using Google.Apis.Auth;
 
@@ -40,19 +39,14 @@ public class GoogleOAuthService(IConfiguration config, HttpClient httpClient)
     /// </summary>
     public async Task<GoogleJsonWebSignature.Payload?> ExchangeCodeForTokenAsync(string code, CancellationToken ct)
     {
-        var requestBody = new
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            client_id = _clientId,
-            client_secret = _clientSecret,
-            code = code,
-            grant_type = "authorization_code",
-            redirect_uri = _redirectUri,
-        };
-
-        var content = new StringContent(
-            JsonSerializer.Serialize(requestBody),
-            Encoding.UTF8,
-            "application/json");
+            ["client_id"] = _clientId,
+            ["client_secret"] = _clientSecret,
+            ["code"] = code,
+            ["grant_type"] = "authorization_code",
+            ["redirect_uri"] = _redirectUri,
+        });
 
         try
         {

@@ -15,6 +15,13 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
 // ── Autenticação JWT ──────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key deve ser configurado via variável de ambiente");
+var jwtKeySizeInBytes = Encoding.UTF8.GetByteCount(jwtKey);
+
+if (jwtKeySizeInBytes < 32)
+{
+    throw new InvalidOperationException(
+        $"Jwt:Key deve ter pelo menos 32 bytes para HS256. Valor atual: {jwtKeySizeInBytes} bytes.");
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -22,13 +29,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.MapInboundClaims = false; // preserva nomes originais dos claims (ex.: "sub", "role")
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer           = true,
-            ValidateAudience         = true,
-            ValidateLifetime         = true,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer              = builder.Configuration["Jwt:Issuer"],
-            ValidAudience            = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         };
     });
 
@@ -45,12 +52,15 @@ builder.Services.AddMediatR(cfg =>
 
 // ── Serviços de domínio ───────────────────────────────────────────────────────
 builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<GoogleOAuthService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PatrulhaService>();
 builder.Services.AddSingleton<QrCodeService>();
+builder.Services.AddHttpClient<GoogleOAuthService>();
 
 // ── OpenAPI / Documentação ────────────────────────────────────────────────────
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -78,7 +88,11 @@ if (app.Environment.IsDevelopment())
 }
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
-app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

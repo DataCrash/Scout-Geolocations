@@ -1,0 +1,21 @@
+{
+  "name": "scout-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:real": "cross-env RUN_REAL_BACKEND_E2E=1 playwright test",
+    "test:real:frontend": "cross-env RUN_REAL_BACKEND_E2E=1 playwright test frontend-real-backend.spec.ts",
+    "test:real:identity": "cross-env RUN_REAL_BACKEND_E2E=1 playwright test identity-patrulha-real.spec.ts",
+    "test:real:admin": "cross-env RUN_REAL_BACKEND_E2E=1 playwright test admin-challenge-real.spec.ts admin-identity-real.spec.ts admin-cache-real.spec.ts admin-roteiro-real.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^25.8.0",
+    "cross-env": "^7.0.3",
+    "typescript": "~6.0.2"
+  }
+}

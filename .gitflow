@@ -2,7 +2,7 @@
 # Branch naming conventions and workflow
 
 [gitflow "branch"]
-  master = main
+  master = master
   develop = develop
   feature = feature/
   bugfix = bugfix/

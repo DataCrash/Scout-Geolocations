@@ -15,10 +15,10 @@ namespace Scout.Identity.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.UseIdentityByDefaultColumns();
 
             modelBuilder.Entity("Scout.Identity.Api.Domain.Entities.Patrulha", b =>
             {

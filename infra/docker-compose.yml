@@ -17,6 +17,24 @@ services:
       retries: 5
     restart: unless-stopped
 
+  challenge-db:
+    image: postgres:16-alpine
+    container_name: scout-challenge-postgres
+    environment:
+      POSTGRES_DB: challenge_db
+      POSTGRES_USER: scout
+      POSTGRES_PASSWORD: scout_dev_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - challenge_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scout -d challenge_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: scout-redis
@@ -40,7 +58,7 @@ services:
       RABBITMQ_DEFAULT_PASS: scout_dev_pass
     ports:
       - "5672:5672"
-      - "15672:15672"  # Management UI: http://localhost:15672
+      - "15672:15672" # Management UI: http://localhost:15672
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -76,7 +94,104 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  cache-api:
+    build:
+      context: ../backend/Scout.Cache.Api
+      dockerfile: Dockerfile
+    container_name: scout-cache-api
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=scout_cache;Username=scout;Password=scout_dev_pass
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=scout-geolocations
+      - Jwt__Audience=scout-geolocations-client
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=scout
+      - RabbitMq__Password=scout_dev_pass
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  location-api:
+    build:
+      context: ../backend/Scout.Location.Api
+      dockerfile: Dockerfile
+    container_name: scout-location-api
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=scout_location;Username=scout;Password=scout_dev_pass
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=scout-geolocations
+      - Jwt__Audience=scout-geolocations-client
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=scout
+      - RabbitMq__Password=scout_dev_pass
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  challenge-api:
+    build:
+      context: ../backend/Scout.Challenge.Api
+      dockerfile: Dockerfile
+    container_name: scout-challenge-api
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=challenge-db;Port=5432;Database=challenge_db;Username=scout;Password=scout_dev_pass
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=scout-geolocations
+      - Jwt__Audience=scout-geolocations-client
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=scout
+      - RabbitMq__Password=scout_dev_pass
+    depends_on:
+      challenge-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  vision-api:
+    build:
+      context: ../backend/Scout.Vision.Api
+      dockerfile: Dockerfile
+    container_name: scout-vision-api
+    ports:
+      - "5005:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=scout-geolocations
+      - Jwt__Audience=scout-geolocations-client
+      - Vision__Onnx__Enabled=false
+      - Vision__Onnx__ModelPath=
+      - Vision__Onnx__LabelsPath=
+      - Vision__Onnx__InputName=
+      - Vision__Onnx__OutputName=
+      - Vision__Onnx__InputWidth=224
+      - Vision__Onnx__InputHeight=224
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  challenge_postgres_data:
   redis_data:
   rabbitmq_data:

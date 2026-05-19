@@ -63,9 +63,10 @@
   "editor.fontLigatures": true,
   "editor.lineHeight": 1.6,
   "editor.letterSpacing": 0.5,
-  "editor.wordWrap": "on",
+  "editor.wordWrap": "bounded",
   "editor.wordWrapColumn": 120,
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "modificationsIfAvailable",
   "editor.formatOnPaste": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.tabSize": 4,
@@ -90,7 +91,7 @@
   // ──────────────────────────────────────────────────────────────────────────────
   // AUTO-SAVE & FILES
   // ──────────────────────────────────────────────────────────────────────────────
-  "files.autoSave": "afterDelay",
+  "files.autoSave": "off",
   "files.autoSaveDelay": 1000,
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
@@ -154,14 +155,7 @@
   // ──────────────────────────────────────────────────────────────────────────────
   // JSON & YAML Formatting
   // ──────────────────────────────────────────────────────────────────────────────
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "cSpell.enabled": true,
-    "editor.tabSize": 2
-  },
-
-  "[jsonc]": {
+  "[json, jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "cSpell.enabled": true,
@@ -176,13 +170,16 @@
     "editor.insertSpaces": true
   },
 
-  "[typescript]": {
+  "[typescript, typescriptreact, javascript, javascriptreact]": {
+    "js/ts.format.semicolons": "insert",
+    "js/ts.suggest.autoImports": true,
     "cSpell.enabled": true
   },
 
-  "[typescriptreact]": {
-    "cSpell.enabled": true
-  },
+  // "[typescriptreact]": {
+  //   "js/ts.format.semicolons": "insert",
+  //   "cSpell.enabled": true
+  // },
 
   "[plaintext]": {
     "cSpell.enabled": true
@@ -200,7 +197,7 @@
   "prettier.useTabs": false,
   "prettier.semi": true,
   "prettier.singleQuote": false,
-  "prettier.trailingComma": "es5",
+  "prettier.trailingComma": "all",
   "prettier.bracketSpacing": true,
   "prettier.arrowParens": "always",
   "prettier.endOfLine": "lf",
@@ -212,14 +209,15 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "cSpell.enabled": true,
-    "editor.wordWrap": "on",
+    "editor.wordWrap": "bounded",
+    "editor.insertSpaces": true,
     "editor.tabSize": 2
   },
 
   "markdownlint.config": {
     "MD003": false,
     "MD007": { "indent": 2 },
-    "MD013": { "line_length": 120, "code_blocks": false },
+    "MD013": { "line_length": 200, "code_blocks": true },
     "MD024": false,
     "MD025": false,
     "MD033": false,
@@ -455,7 +453,10 @@
   // CodeActions para auto-fix
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
-    "source.organizeImports": "explicit"
+    "source.organizeImports": "explicit",
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.sonarlint": "never",
+    "source.fixAll.sonarjs": "never"
   },
 
   // ──────────────────────────────────────────────────────────────────────────────
@@ -480,5 +481,8 @@
   // ──────────────────────────────────────────────────────────────────────────────
   "extensions.ignoreRecommendations": false,
   "workbench.enableExperiments": true,
-  "dotnet.formatting.organizeImportsOnFormat": true
+  "dotnet.formatting.organizeImportsOnFormat": true,
+  "containers.commands.attach": "docker exec -it",
+  "containers.containers.label": "name",
+  "containers.images.label": "name"
 }

@@ -1,0 +1,39 @@
+name: Release (master)
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-identity-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore backend/Scout.Identity.Api/Scout.Identity.Api.csproj
+
+      - name: Build
+        run: dotnet build backend/Scout.Identity.Api/Scout.Identity.Api.csproj --configuration Release --no-restore --nologo
+
+      - name: Publish
+        run: dotnet publish backend/Scout.Identity.Api/Scout.Identity.Api.csproj --configuration Release --no-build --output ./artifacts/identity-api
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-api-release
+          path: ./artifacts/identity-api
+          if-no-files-found: error

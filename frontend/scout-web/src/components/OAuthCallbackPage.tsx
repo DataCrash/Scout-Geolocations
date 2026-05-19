@@ -3,6 +3,28 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+function resolveOAuthErrorMessage(
+  errorCode: string,
+  errorDescription: string | null,
+): string {
+  if (errorCode === "oauth_domain_not_allowed") {
+    return "Esta conta nao pertence aos Escoteiros. Use uma conta @escoteiros.org.br para entrar.";
+  }
+
+  if (
+    errorCode === "oauth_invalid_code" ||
+    errorCode === "oauth_missing_code"
+  ) {
+    return "Nao foi possivel concluir o login com Google. Tente novamente.";
+  }
+
+  if (errorDescription?.trim()) {
+    return errorDescription;
+  }
+
+  return `Falha no login: ${errorCode}`;
+}
+
 export function OAuthCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -20,11 +42,16 @@ export function OAuthCallbackPage() {
         const name = searchParams.get("name");
         const role = searchParams.get("role");
         const error = searchParams.get("error");
+        const errorDescription = searchParams.get("errorDescription");
 
         if (error) {
+          const friendlyMessage = resolveOAuthErrorMessage(
+            error,
+            errorDescription,
+          );
           setStatus("error");
-          setMessage(`Login failed: ${error}`);
-          setError(`Login failed: ${error}`);
+          setMessage(friendlyMessage);
+          setError(friendlyMessage);
           setTimeout(() => navigate("/login"), 3000);
           return;
         }

@@ -25,6 +25,20 @@ test.describe("frontend oauth callback validation", () => {
     ).toBeVisible();
   });
 
+  test("mostra mensagem amigavel quando dominio nao e permitido", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/auth/callback?error=oauth_domain_not_allowed&errorDescription=Use%20uma%20conta%20%40escoteiros.org.br%20para%20acessar%20o%20sistema.",
+    );
+
+    await expect(
+      page.getByText(/Use uma conta @escoteiros\.org\.br para entrar\./i),
+    ).toBeVisible();
+
+    await page.waitForURL(/\/login$/i);
+  });
+
   test("aceita callback válido e navega para dashboard", async ({ page }) => {
     await page.goto(
       "/auth/callback?token=e2e-token&userId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&name=E2E%20User&role=Convidado",

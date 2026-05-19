@@ -1,22 +1,5 @@
+import { type ChallengeItem as MockChallengeItem } from "@/lib/schemas/challengeItemSchema";
 import { expect, test } from "@playwright/test";
-
-type MockChallengeItem = {
-  id: string;
-  eventId: string;
-  title: string;
-  description: string;
-  type: number;
-  status: number;
-  qrCode?: string;
-  latitude?: number;
-  longitude?: number;
-  radiusMeters: number;
-  basePoints: number;
-  bonusPoints: number;
-  bonusTimeSeconds: number;
-  geocacheId?: string;
-  createdAt: string;
-};
 
 const mockEventId = "00000000-0000-0000-0000-000000000001";
 
@@ -76,15 +59,14 @@ test.describe("frontend MVP smoke", () => {
     await prepareBrowserState(page);
     await page.goto("/");
 
-    const before = page
-      .getByText(/Patrulha Lobo/i)
-      .locator("..")
-      .locator("..");
-    await expect(before).toContainText(/120 pts/i);
+    const loboLeaderboardItem = page
+      .getByRole("heading", { level: 3, name: /Patrulha Lobo/i })
+      .locator("xpath=ancestor::li[1]");
+    await expect(loboLeaderboardItem).toContainText(/120 pts/i);
 
     await page.getByRole("button", { name: /Simular validação/i }).click();
 
-    await expect(before).toContainText(/135 pts/i);
+    await expect(loboLeaderboardItem).toContainText(/135 pts/i);
   });
 
   test("valida check-in com localizacao e resposta mockada", async ({
@@ -143,6 +125,103 @@ test.describe("frontend MVP smoke", () => {
       Latitude: -23.55052,
       Longitude: -46.63331,
     });
+  });
+
+  test("exibe erro quando resposta de check-in vem com payload inválido", async ({
+    page,
+  }) => {
+    await prepareBrowserState(page);
+
+    await page.route(
+      "http://localhost:5004/api/challenges/**/validate",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: "attempt-invalid",
+            challengeId: "00000000-0000-0000-0000-000000000010",
+            patrulhaId: "11111111-1111-1111-1111-111111111111",
+            userId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            status: 1,
+            attemptedAt: "2026-05-18T00:00:00Z",
+            validatedAt: "2026-05-18T00:00:02Z",
+          }),
+        });
+      },
+    );
+
+    await page.goto("/");
+
+    await page.getByPlaceholder("Conteúdo do QR Code").fill("QR-E2E-INVALID");
+    await page.getByRole("button", { name: /Validar check-in/i }).click();
+
+    await expect(
+      page.getByText(/Resposta inválida da API de check-in\./i),
+    ).toBeVisible();
+  });
+
+  test("exibe erro quando payload local de check-in está inválido", async ({
+    page,
+  }) => {
+    await prepareBrowserState(page);
+    await page.goto("/");
+
+    await page.getByPlaceholder("UserId").fill("");
+    await page.getByRole("button", { name: /Validar check-in/i }).click();
+
+    await expect(
+      page.getByText(/Payload inválido de check-in\./i),
+    ).toBeVisible();
+  });
+
+  test("salva check-in na fila offline quando a rede falha", async ({
+    page,
+  }) => {
+    await prepareBrowserState(page);
+
+    await page.route(
+      "http://localhost:5004/api/challenges/**/validate",
+      async (route) => {
+        await route.abort("failed");
+      },
+    );
+
+    await page.goto("/");
+
+    await page.getByPlaceholder("Conteúdo do QR Code").fill("QR-OFFLINE-001");
+    await page.getByRole("button", { name: /Validar check-in/i }).click();
+
+    await expect(
+      page.getByText(
+        /Sem conexão\. Check-in salvo na fila offline \(1 pendente\(s\)\)\./i,
+      ),
+    ).toBeVisible();
+  });
+
+  test("exibe erro quando listagem admin retorna payload inválido", async ({
+    page,
+  }) => {
+    await prepareBrowserState(page);
+
+    await page.route(
+      "http://localhost:5004/api/challenges?*",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ invalid: true }),
+        });
+      },
+    );
+
+    await page.goto("/");
+
+    await page.getByRole("button", { name: /Recarregar lista/i }).click();
+
+    await expect(
+      page.getByText(/Resposta inválida da API de desafios\./i),
+    ).toBeVisible();
   });
 
   test("executa CRUD admin com respostas mockadas", async ({ page }) => {

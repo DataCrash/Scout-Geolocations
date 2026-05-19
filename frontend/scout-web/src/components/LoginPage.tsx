@@ -42,7 +42,7 @@ export function LoginPage() {
       setUser({
         id: data.userId,
         name: data.name,
-        role: data.role as any,
+        role: data.role,
       });
       navigate("/");
     } catch (err) {

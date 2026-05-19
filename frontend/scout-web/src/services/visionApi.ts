@@ -1,18 +1,11 @@
+import {
+  visionAnalysisResponseSchema,
+  type VisionAnalysisResponse,
+} from "@/lib/schemas/visionAnalysisSchema";
 import { getAuthHeader } from "@/store/useAuthStore";
 
 const API_BASE_URL =
   import.meta.env.VITE_VISION_API_URL ?? "http://localhost:5005";
-
-export type VisionAnalysisResponse = {
-  label: string;
-  confidence: number;
-  engine: string;
-  requiresManualReview: boolean;
-  summary: string;
-  brightness: number;
-  contrast: number;
-  analyzedAtUtc: string;
-};
 
 export async function analyzePhotoWithVisionApi(
   photoBase64: string,
@@ -42,5 +35,12 @@ export async function analyzePhotoWithVisionApi(
     throw new Error(detail);
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = visionAnalysisResponseSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de visão.");
+  }
+
+  return parsed.data;
 }

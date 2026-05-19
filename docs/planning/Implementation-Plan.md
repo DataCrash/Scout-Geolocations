@@ -189,9 +189,9 @@
 
 ### Critérios de aceite
 
-- [ ] WebNFC funcionando em dispositivos compatíveis como alternativa ao QR.
-- [ ] Service Worker capturando submissões offline e sincronizando ao reconectar.
-- [ ] Vínculo de Patrulha por NFC avaliado e documentado (POC ou decisão de pendência).
+- [x] WebNFC funcionando em dispositivos compatíveis como alternativa ao QR.
+- [x] Service Worker capturando submissões offline e sincronizando ao reconectar.
+- [x] Vínculo de Patrulha por NFC avaliado e documentado (POC ou decisão de pendência).
 
 ### Entregas técnicas
 
@@ -206,6 +206,29 @@
 - [x] Service Worker inicial implementado com cache de app shell e estratégia runtime para navegação/assets.
 - [x] Slice inicial de WebNFC implementado no Dashboard com leitura de tag e fallback explícito para QR manual.
 - [x] Cobertura E2E adicionada para fallback WebNFC -> QR no frontend.
+- [x] POC de vínculo de Patrulha por NFC implementada via payload estruturado (`patrol=<uuid>;qr=<code>`) com cobertura E2E dedicada.
+- [x] Service Worker expandido para capturar `POST /api/challenges/{id}/validate` offline, enfileirar e reenviar automaticamente ao reconectar.
+- [x] Base local de badges adicionada ao Dashboard, com desbloqueio derivado do ranking e persistência no frontend.
+- [x] Histórico local de leaderboard entre eventos adicionado no Dashboard com persistência por `eventId` e cobertura E2E.
+- [x] Compartilhamento local de rotas personalizadas adicionado no Dashboard com persistência por evento e cobertura E2E.
+- [x] Perfil local de Patrulha adicionado no Dashboard com edição/persistência e cobertura E2E.
+- [x] Resumo social consolidado da Patrulha adicionado no Dashboard (ranking, badges, rotas e snapshot) com cobertura E2E.
+- [x] Badge customizável por evento adicionada no Dashboard, com desbloqueio dinâmico e cobertura E2E.
+- [x] Camada de Social Service local adicionada no frontend para consolidar o resumo social da Patrulha de forma reutilizável.
+- [x] Endpoint mínimo de perfil social da Patrulha adicionado na Identity API para leitura consolidada de monitor, submonitor e membros recentes.
+- [x] Dashboard do frontend passa a consumir o perfil social real da Patrulha quando a Identity API estiver disponível, mantendo fallback local offline.
+- [x] Validação Zod aplicada no contrato remoto de perfil social da Patrulha, com fallback seguro para payload inválido e cobertura E2E dedicada.
+- [x] Validação Zod aplicada no contrato de resposta de check-in (`validateChallenge`), com mensagem explícita para payload inválido e cobertura E2E de smoke.
+- [x] Validação Zod aplicada no `adminChallengesApi` (list/create/update), com erro explícito para payload inválido e cobertura E2E no painel admin.
+- [x] Validação Zod aplicada no `authApi` (guest/google/authorize/me), com erro explícito para payload inválido e cobertura E2E no login.
+- [x] Validação Zod aplicada também no payload de entrada de `validateChallenge`, com bloqueio local de request inválida e cobertura E2E dedicada.
+- [x] Parser de payload NFC agora valida resultado com Zod e mantém comportamento seguro quando `patrol` estruturado vem inválido (cobertura E2E dedicada).
+- [x] Validação Zod aplicada no fallback da Vision API com erro explícito para payload inválido e cobertura E2E dedicada.
+- [x] Conexão realtime do leaderboard atualizada para usar token do `auth-store` (remoção da dependência de `access_token` legado em localStorage).
+- [x] Fila offline de check-ins protegida com schema Zod (enqueue/flush), incluindo saneamento de itens inválidos e cobertura E2E de fallback em erro de rede.
+- [x] Callback OAuth do frontend agora valida parâmetros com schema de autenticação (role incluída), com cobertura E2E para sucesso e cenários inválidos.
+- [x] Resposta de `GET /auth/google/authorize` endurecida com validação de URL absoluta no schema Zod, com cobertura E2E para payload com `authorizationUrl` inválida.
+- [x] Tipagem de `role` de autenticação consolidada a partir do schema Zod no frontend, removendo cast inseguro no login de convidado.
 
 ---
 
@@ -217,10 +240,10 @@
 
 ### Critérios de aceite
 
-- [ ] Sistema de badges com critérios configuráveis por evento.
-- [ ] Leaderboard histórico entre eventos.
-- [ ] Compartilhamento de rotas personalizadas.
-- [ ] Social Service ativo com perfis de Patrulha.
+- [x] Sistema de badges com critérios configuráveis por evento.
+- [x] Leaderboard histórico entre eventos.
+- [x] Compartilhamento de rotas personalizadas.
+- [x] Social Service ativo com perfis de Patrulha.
 
 ### Entregas técnicas
 
@@ -236,3 +259,4 @@
 - Mudanças de escopo devem ser registradas em `BluePrint.md` e refletidas nos documentos afetados.
 - A IA pode implementar, mas decisões estruturais e de privacidade exigem revisão humana.
 - Commits atômicos e semânticos; branches por feature/fix alinhados ao milestone.
+- Fechamento de versão deve seguir `docs/planning/Release-Checklist-MVP.md` (GitFlow + forward-only).

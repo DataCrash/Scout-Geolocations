@@ -156,14 +156,29 @@ public static class AuthEndpoints
             ILogger<Program> logger,
             CancellationToken ct) =>
         {
+            var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:5173";
+
+            IResult RedirectWithError(string errorCode, string? errorDescription = null)
+            {
+                var errorUrl = QueryHelpers.AddQueryString(
+                    $"{frontendUrl}/auth/callback",
+                    new Dictionary<string, string?>
+                    {
+                        ["error"] = errorCode,
+                        ["errorDescription"] = errorDescription,
+                    });
+
+                return Results.Redirect(errorUrl);
+            }
+
             if (string.IsNullOrWhiteSpace(code))
-                return Results.BadRequest("code é obrigatório");
+                return RedirectWithError("oauth_missing_code", "Nao foi possivel concluir o login com Google.");
 
             var payload = await oauthService.ExchangeCodeForTokenAsync(code, ct);
             if (payload is null)
             {
                 logger.LogWarning("AUDIT auth.google.callback.invalid_code state={State}", state);
-                return Results.Unauthorized();
+                return RedirectWithError("oauth_invalid_code", "Nao foi possivel validar o login com Google.");
             }
 
             if (!payload.Email.EndsWith("@escoteiros.org.br", StringComparison.OrdinalIgnoreCase))
@@ -173,9 +188,9 @@ public static class AuthEndpoints
                     payload.Email,
                     state);
 
-                return Results.Problem(
-                    detail: "Apenas contas @escoteiros.org.br são permitidas",
-                    statusCode: StatusCodes.Status403Forbidden);
+                return RedirectWithError(
+                    "oauth_domain_not_allowed",
+                    "Use uma conta @escoteiros.org.br para acessar o sistema.");
             }
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == payload.Subject, ct);
@@ -203,7 +218,6 @@ public static class AuthEndpoints
                 created = true;
             }
 
-            var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:5173";
             var jwtToken = jwt.Generate(user);
             var redirectUrl = QueryHelpers.AddQueryString(
                 $"{frontendUrl}/auth/callback",

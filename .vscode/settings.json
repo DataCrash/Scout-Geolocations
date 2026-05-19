@@ -66,6 +66,7 @@
   "editor.wordWrap": "bounded",
   "editor.wordWrapColumn": 120,
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "modificationsIfAvailable",
   "editor.formatOnPaste": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.tabSize": 4,
@@ -116,7 +117,7 @@
     "cSpell.enabled": true,
     "editor.tabSize": 4,
     "editor.codeActionsOnSave": {
-      "source.fixAll": "always",
+      "source.fixAll": "explicit",
       "source.organizeImports": "explicit"
     }
   },
@@ -445,7 +446,10 @@
   // CodeActions para auto-fix
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
-    "source.organizeImports": "explicit"
+    "source.organizeImports": "explicit",
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.sonarlint": "never",
+    "source.fixAll.sonarjs": "never"
   },
 
   // ──────────────────────────────────────────────────────────────────────────────

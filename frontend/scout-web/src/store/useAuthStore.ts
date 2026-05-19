@@ -1,3 +1,4 @@
+import type { AuthRole } from "@/lib/schemas/authApiSchemas";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -5,7 +6,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email?: string;
-  role: "ChefesEscoteiro" | "Integrante" | "Convidado";
+  role: AuthRole;
 }
 
 interface AuthStore {

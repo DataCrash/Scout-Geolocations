@@ -9,29 +9,48 @@ import {
 } from "@/services/adminChallengesApi";
 import { validateChallenge } from "@/services/challengeApi";
 import { connectLeaderboardRealtime } from "@/services/leaderboardRealtime";
+import { parseNfcPayload } from "@/services/nfcPayload";
 import {
   enqueueCheckinSubmission,
   flushCheckinQueue,
   getQueuedCheckinsCount,
 } from "@/services/offlineCheckinQueue";
 import {
+  getPatrolSocialProfile,
+  type PatrolSocialProfile,
+} from "@/services/patrolProfilesApi";
+import {
   analyzePhotoLocally,
   type PhotoInferenceResult,
 } from "@/services/photoInference";
+import {
+  buildPatrolSocialSummary,
+  type PatrolSocialSummary,
+} from "@/services/socialService";
 import {
   analyzePhotoWithVisionApi,
   type VisionAnalysisResponse,
 } from "@/services/visionApi";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useLeaderboardHistoryStore } from "@/store/useLeaderboardHistoryStore";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
+import { usePatrolProfileStore } from "@/store/usePatrolProfileStore";
+import { useSharedRoutesStore } from "@/store/useSharedRoutesStore";
+import {
+  DEFAULT_BADGE_CATALOG,
+  useSocialBadgeStore,
+} from "@/store/useSocialBadgeStore";
 import L from "leaflet";
 import {
+  Award,
   Camera,
   Compass,
   LogOut,
   QrCode,
+  Share2,
   ShieldCheck,
   Trophy,
+  User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -58,6 +77,16 @@ export default function DashboardPage() {
   const { user, logout } = useAuthStore();
   const { eventId, scores, bumpPatrol, applyRealtimeUpdate, lastRealtimeAt } =
     useLeaderboardStore();
+  const { byEventId, upsertEventSnapshot } = useLeaderboardHistoryStore();
+  const { byPatrolId, upsertProfile } = usePatrolProfileStore();
+  const { routesByEventId, shareRoute } = useSharedRoutesStore();
+  const {
+    badgeCatalogByEventId,
+    unlockedBadgeIdsByEventId,
+    lastSyncedAtByEventId,
+    addBadgeForEvent,
+    syncFromScores,
+  } = useSocialBadgeStore();
   const mapRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -86,6 +115,24 @@ export default function DashboardPage() {
   const [adminType, setAdminType] = useState<number>(0);
   const [adminQr, setAdminQr] = useState("QR-DEMO-001");
   const [adminMessage, setAdminMessage] = useState<string>("");
+  const [routeName, setRouteName] = useState("Rota Trilha Norte");
+  const [routeWaypoints, setRouteWaypoints] = useState(
+    "Pórtico -> Bosque -> Lago",
+  );
+  const [routeMessage, setRouteMessage] = useState<string>("");
+  const [profileName, setProfileName] = useState("Patrulha Lobo");
+  const [profileBio, setProfileBio] = useState(
+    "Especialistas em orientação e trilha.",
+  );
+  const [profileFocus, setProfileFocus] = useState("Navegação e estratégia");
+  const [profileMessage, setProfileMessage] = useState<string>("");
+  const [badgeTitle, setBadgeTitle] = useState("Sentinela do Vale");
+  const [badgeDescription, setBadgeDescription] = useState(
+    "Alcançar 121 pontos no evento.",
+  );
+  const [badgePointsThreshold, setBadgePointsThreshold] = useState("121");
+  const [badgeChallengesThreshold, setBadgeChallengesThreshold] = useState("");
+  const [badgeMessage, setBadgeMessage] = useState<string>("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
@@ -96,6 +143,8 @@ export default function DashboardPage() {
   const [backendVisionResult, setBackendVisionResult] =
     useState<VisionAnalysisResponse | null>(null);
   const [isBackendVisionLoading, setIsBackendVisionLoading] = useState(false);
+  const [remotePatrolProfile, setRemotePatrolProfile] =
+    useState<PatrolSocialProfile | null>(null);
   const {
     isSupported: isNfcSupported,
     isScanning: isNfcScanning,
@@ -197,9 +246,102 @@ export default function DashboardPage() {
       return;
     }
 
-    setQrCode(nfcPayload);
-    setCheckinMessage(`Tag NFC lida com sucesso: ${nfcPayload}`);
+    const parsed = parseNfcPayload(nfcPayload);
+
+    if (parsed.patrulhaId) {
+      setPatrulhaId(parsed.patrulhaId);
+    }
+
+    if (parsed.checkinCode) {
+      setQrCode(parsed.checkinCode);
+    }
+
+    const details = [
+      parsed.patrulhaId ? `Patrulha: ${parsed.patrulhaId}` : null,
+      parsed.checkinCode ? `QR/Code: ${parsed.checkinCode}` : null,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+
+    setCheckinMessage(
+      details
+        ? `Tag NFC lida com sucesso. ${details}`
+        : `Tag NFC lida com sucesso: ${parsed.raw}`,
+    );
   }, [nfcPayload]);
+
+  useEffect(() => {
+    syncFromScores(eventId, scores);
+  }, [eventId, scores, syncFromScores]);
+
+  useEffect(() => {
+    upsertEventSnapshot(eventId, scores);
+  }, [eventId, scores, upsertEventSnapshot]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPatrolSocialProfile() {
+      try {
+        const profile = await getPatrolSocialProfile(patrulhaId);
+        if (active) {
+          setRemotePatrolProfile(profile);
+        }
+      } catch {
+        if (active) {
+          setRemotePatrolProfile(null);
+        }
+      }
+    }
+
+    void loadPatrolSocialProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [patrulhaId]);
+
+  const eventHistory = Object.values(byEventId)
+    .sort(
+      (a, b) =>
+        new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime(),
+    )
+    .slice(0, 5);
+  const eventBadges = badgeCatalogByEventId[eventId] ?? DEFAULT_BADGE_CATALOG;
+  const unlockedBadgeIds = unlockedBadgeIdsByEventId[eventId] ?? [];
+  const lastSyncedAt = lastSyncedAtByEventId[eventId] ?? null;
+  const activePatrolProfile = byPatrolId[patrulhaId];
+  const resolvedPatrolDisplayName =
+    activePatrolProfile?.displayName ?? remotePatrolProfile?.name ?? null;
+  const sharedRoutes = routesByEventId[eventId] ?? [];
+  const latestEventSnapshot = eventHistory[0];
+  const socialSummary: PatrolSocialSummary = buildPatrolSocialSummary({
+    patrolId: patrulhaId,
+    scores,
+    profile: resolvedPatrolDisplayName
+      ? { displayName: resolvedPatrolDisplayName }
+      : null,
+    unlockedBadgesCount: unlockedBadgeIds.length,
+    sharedRoutesCount: sharedRoutes.length,
+    latestEventSnapshotId: latestEventSnapshot?.eventId ?? null,
+  });
+
+  const bestPoints = scores.length
+    ? Math.max(...scores.map((score) => score.points))
+    : 0;
+  const bestValidatedChallenges = scores.length
+    ? Math.max(...scores.map((score) => score.validatedChallenges))
+    : 0;
+
+  useEffect(() => {
+    if (!activePatrolProfile) {
+      return;
+    }
+
+    setProfileName(activePatrolProfile.displayName);
+    setProfileBio(activePatrolProfile.bio);
+    setProfileFocus(activePatrolProfile.focus);
+  }, [activePatrolProfile]);
 
   useEffect(() => {
     let active = true;
@@ -508,6 +650,68 @@ export default function DashboardPage() {
     }
   }
 
+  function handleShareRoute() {
+    const trimmedName = routeName.trim();
+    const trimmedWaypoints = routeWaypoints.trim();
+
+    if (!trimmedName || !trimmedWaypoints) {
+      setRouteMessage("Informe nome e waypoints da rota para compartilhar.");
+      return;
+    }
+
+    shareRoute(eventId, {
+      name: trimmedName,
+      waypoints: trimmedWaypoints,
+      sharedBy: user?.name ?? "Monitor",
+    });
+    setRouteMessage("Rota compartilhada com sucesso.");
+  }
+
+  function handleSavePatrolProfile() {
+    const trimmedName = profileName.trim();
+    const trimmedBio = profileBio.trim();
+    const trimmedFocus = profileFocus.trim();
+
+    if (!trimmedName || !trimmedBio || !trimmedFocus) {
+      setProfileMessage("Preencha nome, bio e foco da Patrulha.");
+      return;
+    }
+
+    upsertProfile(patrulhaId, {
+      displayName: trimmedName,
+      bio: trimmedBio,
+      focus: trimmedFocus,
+    });
+    setProfileMessage("Perfil de Patrulha atualizado com sucesso.");
+  }
+
+  function handleAddCustomBadge() {
+    const thresholdPoints = badgePointsThreshold.trim()
+      ? Number(badgePointsThreshold)
+      : undefined;
+    const thresholdChallenges = badgeChallengesThreshold.trim()
+      ? Number(badgeChallengesThreshold)
+      : undefined;
+
+    if (!badgeTitle.trim() || !badgeDescription.trim()) {
+      setBadgeMessage("Informe título e descrição da badge.");
+      return;
+    }
+
+    if (thresholdPoints === undefined && thresholdChallenges === undefined) {
+      setBadgeMessage("Defina ao menos uma meta de pontos ou desafios.");
+      return;
+    }
+
+    addBadgeForEvent(eventId, {
+      title: badgeTitle,
+      description: badgeDescription,
+      thresholdPoints,
+      thresholdChallenges,
+    });
+    setBadgeMessage("Badge personalizada adicionada ao evento.");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(34,211,238,0.22),transparent_35%),radial-gradient(circle_at_85%_10%,rgba(251,146,60,0.2),transparent_30%),linear-gradient(140deg,#f2fbfe_0%,#eff6ff_45%,#fffaf2_100%)]" />
@@ -814,6 +1018,325 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Trophy className="h-4 w-4" />
+              Histórico entre eventos
+            </div>
+
+            <ul className="space-y-2" aria-label="historico-entre-eventos">
+              {eventHistory.map((snapshot) => {
+                const leader = snapshot.scores[0];
+
+                return (
+                  <li
+                    key={snapshot.eventId}
+                    className="rounded-xl border border-border/70 bg-white p-3"
+                  >
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Evento {snapshot.eventId.slice(0, 8)}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {leader
+                        ? `${leader.name}: ${leader.points} pts`
+                        : "Sem pontuação registrada"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Atualizado às{" "}
+                      {new Date(snapshot.capturedAt).toLocaleTimeString(
+                        "pt-BR",
+                      )}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Award className="h-4 w-4" />
+              Badges do evento
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Título da badge"
+                value={badgeTitle}
+                onChange={(event) => setBadgeTitle(event.target.value)}
+              />
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Descrição da badge"
+                value={badgeDescription}
+                onChange={(event) => setBadgeDescription(event.target.value)}
+              />
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <input
+                  className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                  placeholder="Meta de pontos"
+                  value={badgePointsThreshold}
+                  onChange={(event) =>
+                    setBadgePointsThreshold(event.target.value)
+                  }
+                />
+                <input
+                  className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                  placeholder="Meta de desafios"
+                  value={badgeChallengesThreshold}
+                  onChange={(event) =>
+                    setBadgeChallengesThreshold(event.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <Button onClick={handleAddCustomBadge}>Adicionar badge</Button>
+            </div>
+
+            {badgeMessage && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {badgeMessage}
+              </p>
+            )}
+
+            <div className="mt-4 space-y-3" aria-label="badges-evento-list">
+              {eventBadges.map((badge) => {
+                const isUnlocked = unlockedBadgeIds.includes(badge.id);
+
+                return (
+                  <div
+                    key={badge.id}
+                    className={`rounded-2xl border p-4 transition ${
+                      isUnlocked
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-border/70 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                          {isUnlocked ? "Desbloqueado" : "Pendente"}
+                        </p>
+                        <h3 className="mt-1 text-base font-semibold">
+                          {badge.title}
+                        </h3>
+                      </div>
+                      <span className="rounded-full border border-border/70 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        {isUnlocked ? "Ativo" : "Meta"}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {badge.description}
+                    </p>
+
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {badge.thresholdPoints !== undefined && (
+                        <span className="block">
+                          Meta de pontos: {badge.thresholdPoints}
+                          {!isUnlocked && bestPoints < badge.thresholdPoints
+                            ? ` · faltam ${badge.thresholdPoints - bestPoints}`
+                            : ""}
+                        </span>
+                      )}
+                      {badge.thresholdChallenges !== undefined && (
+                        <span className="block">
+                          Meta de desafios: {badge.thresholdChallenges}
+                          {!isUnlocked &&
+                          bestValidatedChallenges < badge.thresholdChallenges
+                            ? ` · faltam ${badge.thresholdChallenges - bestValidatedChallenges}`
+                            : ""}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {lastSyncedAt && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Sincronizado com o ranking às{" "}
+                {new Date(lastSyncedAt).toLocaleTimeString("pt-BR")}.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Share2 className="h-4 w-4" />
+              Rotas compartilhadas
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Nome da rota"
+                value={routeName}
+                onChange={(event) => setRouteName(event.target.value)}
+              />
+              <textarea
+                className="min-h-[76px] rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Waypoints da rota"
+                value={routeWaypoints}
+                onChange={(event) => setRouteWaypoints(event.target.value)}
+              />
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <Button onClick={handleShareRoute}>Compartilhar rota</Button>
+            </div>
+
+            {routeMessage && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {routeMessage}
+              </p>
+            )}
+
+            <ul className="mt-4 space-y-2" aria-label="rotas-compartilhadas">
+              {sharedRoutes.slice(0, 5).map((route) => (
+                <li
+                  key={route.id}
+                  className="rounded-xl border border-border bg-white p-3"
+                >
+                  <p className="text-sm font-semibold">{route.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {route.waypoints}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Compartilhada por {route.sharedBy}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <User className="h-4 w-4" />
+              Perfil da Patrulha
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Nome da Patrulha"
+                value={profileName}
+                onChange={(event) => setProfileName(event.target.value)}
+              />
+              <textarea
+                className="min-h-[76px] rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Bio da Patrulha"
+                value={profileBio}
+                onChange={(event) => setProfileBio(event.target.value)}
+              />
+              <input
+                className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Foco tático"
+                value={profileFocus}
+                onChange={(event) => setProfileFocus(event.target.value)}
+              />
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <Button onClick={handleSavePatrolProfile}>Salvar perfil</Button>
+            </div>
+
+            {profileMessage && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {profileMessage}
+              </p>
+            )}
+
+            {(activePatrolProfile || remotePatrolProfile) && (
+              <div
+                className="mt-3 rounded-xl border border-border bg-white p-3"
+                aria-label="perfil-patrulha-resumo"
+              >
+                {resolvedPatrolDisplayName && (
+                  <p className="text-sm font-semibold">
+                    {resolvedPatrolDisplayName}
+                  </p>
+                )}
+                {activePatrolProfile && (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      {activePatrolProfile.bio}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Foco: {activePatrolProfile.focus}
+                    </p>
+                  </>
+                )}
+                {remotePatrolProfile && (
+                  <>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Monitor: {remotePatrolProfile.monitorName}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Submonitor: {remotePatrolProfile.submonitorName ?? "-"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Membros cadastrados: {remotePatrolProfile.membersCount}
+                    </p>
+                    {remotePatrolProfile.recentMembers.length > 0 && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Membros recentes:{" "}
+                        {remotePatrolProfile.recentMembers
+                          .map((member) => member.name)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Trophy className="h-4 w-4" />
+              Resumo social da Patrulha
+            </div>
+
+            <div
+              className="rounded-xl border border-border bg-white p-3"
+              aria-label="resumo-social-patrulha"
+            >
+              <p className="text-sm font-semibold">
+                {socialSummary.displayName}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Posição no ranking:{" "}
+                {socialSummary.rankingPosition
+                  ? `${socialSummary.rankingPosition}º`
+                  : "-"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pontos atuais: {socialSummary.points}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Desafios validados: {socialSummary.validatedChallenges}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Badges desbloqueadas: {socialSummary.unlockedBadgesCount}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Rotas compartilhadas no evento:{" "}
+                {socialSummary.sharedRoutesCount}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Último snapshot de evento:{" "}
+                {socialSummary.latestEventSnapshotId
+                  ? socialSummary.latestEventSnapshotId.slice(0, 8)
+                  : "indisponível"}
+              </p>
+            </div>
+          </div>
 
           <div className="mt-8 rounded-2xl border border-border/70 bg-white/75 p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">

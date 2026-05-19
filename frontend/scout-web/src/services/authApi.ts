@@ -1,11 +1,13 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
+import {
+  authLoginResponseSchema,
+  authMeResponseSchema,
+  oauthAuthorizeResponseSchema,
+  type AuthMeResponse,
+  type GoogleLoginResponse,
+  type OAuthAuthorizeResponse,
+} from "@/lib/schemas/authApiSchemas";
 
-export interface GoogleLoginResponse {
-  token: string;
-  userId: string;
-  name: string;
-  role: string;
-}
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export interface GuestLoginRequest {
   name: string;
@@ -35,16 +37,20 @@ export async function loginWithGoogle(
     throw new Error(errorText || "Google login failed");
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = authLoginResponseSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de autenticação.");
+  }
+
+  return parsed.data;
 }
 
 /**
  * Initiate OAuth2 redirect flow
  */
-export async function getOAuthAuthorizeUrl(): Promise<{
-  authorizationUrl: string;
-  state: string;
-}> {
+export async function getOAuthAuthorizeUrl(): Promise<OAuthAuthorizeResponse> {
   const response = await fetch(`${API_BASE}/auth/google/authorize`, {
     method: "POST",
   });
@@ -63,7 +69,14 @@ export async function getOAuthAuthorizeUrl(): Promise<{
     throw new Error(errorText || "Failed to get authorization URL");
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = oauthAuthorizeResponseSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de autenticação.");
+  }
+
+  return parsed.data;
 }
 
 /**
@@ -80,13 +93,20 @@ export async function loginAsGuest(name: string): Promise<GoogleLoginResponse> {
     throw new Error("Guest login failed");
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = authLoginResponseSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de autenticação.");
+  }
+
+  return parsed.data;
 }
 
 /**
  * Verify current authentication
  */
-export async function verifyAuth(token: string) {
+export async function verifyAuth(token: string): Promise<AuthMeResponse> {
   const response = await fetch(`${API_BASE}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -95,5 +115,12 @@ export async function verifyAuth(token: string) {
     throw new Error("Authentication verification failed");
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = authMeResponseSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de autenticação.");
+  }
+
+  return parsed.data;
 }

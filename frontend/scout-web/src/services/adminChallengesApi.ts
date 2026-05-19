@@ -1,25 +1,12 @@
+import {
+  challengeItemSchema,
+  challengeItemsSchema,
+  type ChallengeItem,
+} from "@/lib/schemas/challengeItemSchema";
 import { getAuthHeader } from "@/store/useAuthStore";
 
 const API_BASE_URL =
   import.meta.env.VITE_CHALLENGE_API_URL ?? "http://localhost:5004";
-
-export type ChallengeItem = {
-  id: string;
-  eventId: string;
-  title: string;
-  description: string;
-  type: number;
-  status: number;
-  qrCode?: string;
-  latitude?: number;
-  longitude?: number;
-  radiusMeters: number;
-  basePoints: number;
-  bonusPoints: number;
-  bonusTimeSeconds: number;
-  geocacheId?: string;
-  createdAt: string;
-};
 
 export type CreateChallengePayload = {
   eventId: string;
@@ -57,7 +44,14 @@ export async function listChallengesByEvent(
     throw new Error("Falha ao carregar desafios do evento.");
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = challengeItemsSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de desafios.");
+  }
+
+  return parsed.data;
 }
 
 export async function createChallenge(
@@ -73,7 +67,14 @@ export async function createChallenge(
     throw new Error("Falha ao criar desafio.");
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = challengeItemSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de desafios.");
+  }
+
+  return parsed.data;
 }
 
 export async function updateChallengeStatus(
@@ -93,7 +94,14 @@ export async function updateChallengeStatus(
     throw new Error("Falha ao atualizar desafio.");
   }
 
-  return response.json();
+  const data: unknown = await response.json();
+  const parsed = challengeItemSchema.safeParse(data);
+
+  if (!parsed.success) {
+    throw new Error("Resposta inválida da API de desafios.");
+  }
+
+  return parsed.data;
 }
 
 export async function deleteChallenge(challengeId: string): Promise<void> {

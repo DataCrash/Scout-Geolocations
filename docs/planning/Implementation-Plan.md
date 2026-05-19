@@ -259,3 +259,4 @@
 - Mudanças de escopo devem ser registradas em `BluePrint.md` e refletidas nos documentos afetados.
 - A IA pode implementar, mas decisões estruturais e de privacidade exigem revisão humana.
 - Commits atômicos e semânticos; branches por feature/fix alinhados ao milestone.
+- Fechamento de versão deve seguir `docs/planning/Release-Checklist-MVP.md` (GitFlow + forward-only).
